@@ -15,7 +15,11 @@
   body{font-family:'Baloo 2','Noto Sans KR',system-ui,sans-serif;background:#0d3b52;color:#fff;
     display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none}
   #stage{position:relative;width:100%;height:100%;max-width:520px;max-height:100dvh;overflow:hidden}
-  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
+    touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  #stage{touch-action:none}
+  .ovl{touch-action:pan-y}
+  #boosters,#hud{touch-action:manipulation}
 
   #hud{position:relative;z-index:5;display:flex;gap:6px;align-items:center;
     padding:calc(env(safe-area-inset-top) + 8px) 8px 0}
@@ -245,7 +249,8 @@ const DRINKS=[
 const MAX_LV=DRINKS.length-1;
 
 /* ── 캔버스 / 레이아웃 ── */
-const cv=document.getElementById('game'), ctx=cv.getContext('2d');
+const cv=document.getElementById('game');
+let ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
 const field={x:0,y:0,w:0,h:0};
 let dangerY=0, launchY=0, custY=0, bubbleY=0, custR=20;
@@ -260,6 +265,7 @@ function layout(){
   dangerY=field.y+field.h*0.80;
   launchY=field.y+field.h*0.91;
   bubbleY=H*0.125; custY=H*0.205; custR=field.w*0.072;
+  buildDrinkCache();
   for(const b of bodies){ b.r=radiusOf(b.level); confine(b); }
   if(proj){ proj.r=radiusOf(proj.level); proj.x=field.x+field.w/2; proj.y=launchY; }
 }
@@ -269,7 +275,7 @@ addEventListener('resize',layout);
 /* ── 상태 ── */
 let bodies=[],particles=[],proj=null,nextLv=0,customers=[];
 let stageNo=1,score=0,lives=3,combo=0,served=0,goal=5,cfg=null;
-let state='menu',aim=null,bombArmed=false,spawnTimer=0;
+let state='menu',aim=null,bombArmed=false,spawnTimer=0,shotsLeft=6,shake=0,flashes=[];
 
 /* ── 사운드 ── */
 let actx=null,soundOn=true;
@@ -291,11 +297,12 @@ document.getElementById('soundBtn').onclick=e=>{soundOn=!soundOn;e.currentTarget
 const TOTAL_STAGES=30;
 function stageConfig(n){
   return {
-    goal:      clamp(3+Math.floor(n/2),3,10),
-    minOrder:  clamp(1+Math.floor(n/7),1,4),
-    maxOrder:  clamp(2+Math.floor(n/2),2,7),
-    patience:  clamp(36-n*0.8,15,36),
-    startRows: clamp(2+Math.floor(n/6),2,4)
+    goal:      clamp(4+Math.floor(n*0.6),4,12),
+    minOrder:  clamp(3+Math.floor(n/5),3,6),     // 낮은 단계 주문 제거 — 여러 번 합쳐야 나오는 급만
+    maxOrder:  clamp(3+Math.floor(n/2),3,8),
+    patience:  clamp(34-n*0.9,14,34),
+    startRows: clamp(2+Math.floor(n/5),2,5),
+    rowEvery:  clamp(5-Math.floor(n/6),3,5)      // 이 횟수만큼 쏠 때마다 음료가 한 줄 밀려온다
   };
 }
 function newBody(lv,x,y,vx,vy){
@@ -311,6 +318,7 @@ function buildStage(n){
   stageNo=n; cfg=stageConfig(n);
   bodies=[];particles=[];customers=[];
   score=0;lives=3;combo=0;served=0;goal=cfg.goal;bombArmed=false;spawnTimer=0;
+  shotsLeft=cfg.rowEvery;
   nextLv=pickLevel();
   const cols=4;
   for(let r0=0;r0<cfg.startRows;r0++) for(let c=0;c<cols;c++){
@@ -393,6 +401,8 @@ function merge(a,b){
   combo++;
   score+=Math.round((lv+1)*12*(1+(combo-1)*0.5));
   burst(nb.x,nb.y,DRINKS[lv].liquid[0],12+lv*2);
+  flashes.push({x:nb.x,y:nb.y,r:nb.r,color:DRINKS[lv].liquid[0],t:0});
+  shake=Math.min(6,2+lv*0.6);
   beep(300+lv*70,.12,'sine',.13);
   if(combo>1) toast('COMBO x'+combo+'!');
   serve(lv,nb.x,nb.y);
@@ -496,11 +506,31 @@ function shoot(dir){
   proj.vx=dir.dx*sp; proj.vy=dir.dy*sp;
   bodies.push(proj); proj=null; combo=0;
   beep(520,.08,'triangle',.09);
+  shotsLeft--;
+  if(shotsLeft<=0){ shotsLeft=cfg.rowEvery; setTimeout(pushRow,600); }
   setTimeout(()=>{ if(state==='play'&&!proj) loadProj(); },340);
 }
+function pushRow(){                     // 새 줄이 위에서 미끄러져 내려온다
+  if(state!=='play') return;
+  const dy=field.h*0.085;
+  for(const b of bodies) b.push=(b.push||0)+dy;
+  const cols=4;
+  for(let c=0;c<cols;c++){
+    if(Math.random()<0.18) continue;
+    const lv=Math.random()<0.5?0:Math.random()<0.8?1:2;
+    const nb=newBody(lv, field.x+field.w*(c+0.5)/cols+rand(-5,5), field.y+field.h*0.06-dy);
+    nb.push=dy; bodies.push(nb);
+  }
+  shake=6;
+  beep(170,.22,'sawtooth',.09,90);
+  toast('음료가 밀려왔어요!');
+}
 const pos=e=>{const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};
+let activeId=null;
 cv.addEventListener('pointerdown',e=>{
   if(state!=='play') return;
+  e.preventDefault();
+  kbMode=false;
   const p=pos(e);
   if(bombArmed){
     let best=null,bd=Infinity;
@@ -514,11 +544,62 @@ cv.addEventListener('pointerdown',e=>{
     return;
   }
   if(!proj) return;
+  activeId=e.pointerId;
+  try{ cv.setPointerCapture(e.pointerId); }catch(_){}
   aim=aimDirFrom(p.x,p.y);
 });
-cv.addEventListener('pointermove',e=>{ if(aim&&proj){const p=pos(e); aim=aimDirFrom(p.x,p.y);} });
-cv.addEventListener('pointerup',()=>{ if(aim&&proj){shoot(aim); aim=null;} });
-cv.addEventListener('pointercancel',()=>{aim=null;});
+cv.addEventListener('pointermove',e=>{
+  if(activeId!==e.pointerId||!aim||!proj) return;
+  e.preventDefault();
+  const p=pos(e); aim=aimDirFrom(p.x,p.y);
+});
+function release(e){
+  if(activeId!==e.pointerId) return;
+  activeId=null;
+  try{ cv.releasePointerCapture(e.pointerId); }catch(_){}
+  if(aim&&proj){ shoot(aim); }          // 취소되어도 조준값으로 발사
+  aim=null;
+}
+cv.addEventListener('pointerup',release);
+cv.addEventListener('pointercancel',release);
+cv.addEventListener('lostpointercapture',release);
+
+/* ── 키보드 조작 ── */
+let kbMode=false, kbAngle=-Math.PI/2, kbPower=0.72;
+const keys={};
+function kbAim(){
+  return {dx:Math.cos(kbAngle), dy:Math.sin(kbAngle), power:kbPower};
+}
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='escape'){
+    for(const id of ['shopOvl','helpOvl']) hide(id);
+    return;
+  }
+  if(k==='m'){ openMap(); e.preventDefault(); return; }
+  if(state!=='play') return;
+  if(k==='1'){ document.getElementById('bstBomb').click(); return; }
+  if(k==='2'){ document.getElementById('bstUp').click(); return; }
+  if(k==='3'){ document.getElementById('bstTime').click(); return; }
+  if(k==='r'){ startStage(stageNo); return; }
+  if(['arrowleft','arrowright','arrowup','arrowdown','a','d','w','s',' ','enter'].includes(k)){
+    e.preventDefault(); kbMode=true; keys[k]=true;
+    if(k===' '||k==='enter'){
+      if(proj){ shoot(kbAim()); aim=null; }
+    }
+  }
+});
+addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+function kbStep(dt){
+  if(!kbMode||state!=='play') return;
+  const rot=1.9*dt, pw=0.9*dt;
+  if(keys['arrowleft']||keys['a']) kbAngle-=rot;
+  if(keys['arrowright']||keys['d']) kbAngle+=rot;
+  if(keys['arrowup']||keys['w']) kbPower=clamp(kbPower+pw,0.32,1);
+  if(keys['arrowdown']||keys['s']) kbPower=clamp(kbPower-pw,0.32,1);
+  kbAngle=clamp(kbAngle,-Math.PI+0.35,-0.35);
+  if(proj&&!activeId) aim=kbAim();
+}
 
 /* ── 부스터 ── */
 document.getElementById('bstBomb').onclick=()=>{
@@ -577,14 +658,33 @@ document.getElementById('mapShopBtn').onclick=openShop;
 document.getElementById('shopCloseBtn').onclick=()=>hide('shopOvl');
 
 /* ── 그리기 ── */
-function drawDrink(x,y,r,level,alpha){
+const dcache={};
+function buildDrinkCache(){
+  const real=ctx;
+  for(let lv=0;lv<DRINKS.length-1;lv++){        // 마지막 단계는 반짝임 때문에 실시간 렌더
+    const base=radiusOf(lv), pad=base*1.45, size=Math.max(8,Math.ceil(pad*2*DPR));
+    const off=document.createElement('canvas'); off.width=off.height=size;
+    const g=off.getContext('2d'); g.setTransform(DPR,0,0,DPR,0,0);
+    ctx=g; drawDrink(pad,pad,base,lv,1,true); ctx=real;
+    dcache[lv]={c:off,half:pad,base};
+  }
+}
+function drawDrink(x,y,r,level,alpha,raw){
   const D=DRINKS[level];
-  const im=SPR.get('drinks',level);
   ctx.save();
   ctx.globalAlpha=alpha===undefined?1:alpha;
-  ctx.fillStyle='rgba(96,62,28,.20)';
-  ctx.beginPath(); ctx.ellipse(x+r*0.10,y+r*0.62,r*0.82,r*0.28,0,0,TAU); ctx.fill();
-  if(im){ SPR.draw(im,x,y,r*2.1); ctx.restore(); return; }
+  if(!raw){
+    ctx.fillStyle='rgba(96,62,28,.20)';
+    ctx.beginPath(); ctx.ellipse(x+r*0.10,y+r*0.62,r*0.82,r*0.28,0,0,TAU); ctx.fill();
+    const im=SPR.get('drinks',level);
+    if(im){ SPR.draw(im,x,y,r*2.1); ctx.restore(); return; }
+    const cc=dcache[level];
+    if(cc){                                     // 캐시된 그림을 크기만 맞춰 그린다
+      const half=cc.half*(r/cc.base);
+      ctx.drawImage(cc.c,x-half,y-half,half*2,half*2);
+      ctx.restore(); return;
+    }
+  }
   ctx.translate(x,y); ctx.scale(r/50,r/50);
   const cup=new Path2D();
   let topY,topW,botY,botW;
@@ -817,6 +917,9 @@ function drawGoal(){
   ctx.font='700 '+Math.round(field.w*0.037)+'px "Noto Sans KR",sans-serif';
   ctx.fillStyle='rgba(255,255,255,.85)'; ctx.textAlign='center';
   ctx.fillText('서빙 '+served+' / '+goal, field.x+field.w/2, field.y-10);
+  ctx.textAlign='right';
+  ctx.fillStyle=shotsLeft<=1?'#ff8b8b':'rgba(255,255,255,.75)';
+  ctx.fillText('다음 줄 '+shotsLeft+'발', field.x+field.w, field.y-10);
   ctx.restore();
 }
 
@@ -824,7 +927,11 @@ function drawGoal(){
 let last=performance.now();
 function frame(now){
   const dt=Math.min((now-last)/1000,1/30); last=now;
+  kbStep(dt);
   if(state==='play'){
+    for(const b of bodies){                 // 밀려 내려오는 중인 음료
+      if(b.push>0){ const d=Math.min(b.push, field.h*0.5*dt); b.y+=d; b.push-=d; if(b.push<=0) confine(b); }
+    }
     step(dt);
     // 위험선 아래 정지한 음료 정리
     for(const b of bodies){
@@ -835,6 +942,7 @@ function frame(now){
       }
     }
     bodies=bodies.filter(b=>!b.dead);
+    if(bodies.length>26&&state==='play'){ toast('테이블이 가득 찼어요!'); gameOver(); }
     // 손님 타이머
     customers.forEach((c,i)=>{
       if(!c) return;
@@ -849,7 +957,13 @@ function frame(now){
   for(const p of particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.94; p.vy*=0.94; p.life-=dt*1.8; }
   particles=particles.filter(p=>p.life>0);
 
+  if(shake>0) shake=Math.max(0,shake-dt*22);
+  for(const f of flashes){ f.t+=dt; }
+  flashes=flashes.filter(f=>f.t<0.36);
+
   ctx.clearRect(0,0,W,H);
+  ctx.save();
+  if(shake>0) ctx.translate(Math.sin(performance.now()/22)*shake, 0);
   drawBackground();
   for(let i=0;i<3;i++) drawCustomer(i);
   drawTable(); drawGoal();
@@ -871,6 +985,16 @@ function frame(now){
     drawDrink(proj.x,proj.y+bob,r,proj.level);
     drawAim();
   }
+  for(const f of flashes){               // 합쳐진 자리에서 퍼지는 링
+    const t=f.t/0.36;
+    ctx.save();
+    ctx.globalAlpha=(1-t)*0.85; ctx.lineWidth=Math.max(2,f.r*0.22*(1-t));
+    ctx.strokeStyle=f.color;
+    ctx.beginPath(); ctx.arc(f.x,f.y,f.r*(0.6+t*1.5),0,TAU); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();                          // 흔들림 종료
+
   // NEXT 미리보기
   const nr=radiusOf(nextLv)*0.62, nx=field.x+field.w-nr-12, ny=launchY;
   ctx.save(); ctx.globalAlpha=.5; ctx.fillStyle='rgba(255,255,255,.35)';
@@ -931,6 +1055,13 @@ document.getElementById('overMapBtn').onclick=openMap;
 document.getElementById('nextBtn').onclick=()=>startStage(Math.min(stageNo+1,TOTAL_STAGES));
 document.getElementById('retryBtn').onclick=()=>startStage(stageNo);
 
+/* 테스트용 훅: ?debug 를 붙였을 때만 내부 상태를 노출한다 */
+if(location.search.includes('debug')) window.__dbg={
+  get bodies(){return bodies}, get customers(){return customers}, get state(){return state},
+  get proj(){return proj}, get served(){return served}, get lives(){return lives},
+  get shotsLeft(){return shotsLeft}, get wallet(){return wallet}, get items(){return items},
+  get save(){return save}, get launchY(){return launchY}, startStage, serve
+};
 layout(); buildStage(save.unlocked); state='menu'; buildMap();
 requestAnimationFrame(frame);
 })();

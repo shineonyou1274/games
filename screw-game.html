@@ -18,7 +18,11 @@
     touch-action:none;user-select:none;
   }
   #stage{position:relative;width:100%;height:100%;max-width:520px;max-height:100dvh;overflow:hidden}
-  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
+    touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  #stage{touch-action:none}
+  .ovl{touch-action:pan-y}
+  #boosters,#hud{touch-action:manipulation}
 
   #hud{position:relative;z-index:5;display:flex;gap:7px;align-items:center;
     padding:calc(env(safe-area-inset-top) + 8px) 10px 0;}
@@ -336,7 +340,8 @@ function persist(){ store.write(SAVE_KEY,save); store.write('gameWallet',wallet)
 const totalStars=()=>Object.values(save.stars).reduce((a,b)=>a+b,0);
 
 /* ── 캔버스 ──────────────────────────────────── */
-const cv=document.getElementById('game'), ctx=cv.getContext('2d');
+const cv=document.getElementById('game');
+let ctx=cv.getContext('2d');
 let W=0,H=0,DPR=1;
 let board={x:0,y:0,w:0,h:0}, holderBox={y:0,w:0,h:0}, trayBox={y:0,w:0,h:0};
 let SCREW_R=16, UNIT=1, origin={x:0,y:0};
@@ -355,6 +360,7 @@ function layout(){
   UNIT=Math.min(board.w, board.h)*0.98;
   origin={x:board.x+board.w/2-UNIT/2, y:board.y+board.h/2-UNIT/2};
   SCREW_R=UNIT*0.040;
+  buildScrewCache();
 
   if(old.w){
     const sx=board.w/old.w, sy=board.h/old.h;
@@ -372,7 +378,7 @@ addEventListener('resize', layout);
 /* ── 상태 ────────────────────────────────────── */
 let parts=[], screws=[], holders=[], queue=[], tray=[], flying=[], particles=[];
 let stageNo=1, score=0, state='menu', shakeT=0, drill=null, maxTray=0, tplName='';
-const TRAY_MAX=5, HOLDER_SLOTS=3;
+const TRAY_MAX=4, HOLDER_SLOTS=3;
 let holderN=3;                      // ➕부스터로 4개까지 늘어남
 let history=[];                     // 되돌리기용
 
@@ -470,9 +476,9 @@ function stageConfig(n){
   const tpl=TEMPLATES[(n-1)%TEMPLATES.length];
   return {
     tpl,
-    colors: clamp(3+Math.floor((n-1)/4), 3, 6),
-    total:  clamp(12+Math.floor(n*1.2)*1, 12, 30),
-    hidden: clamp(3+Math.floor(n*0.5), 3, 9)
+    colors: clamp(3+Math.floor(n/2), 3, 8),
+    total:  clamp(15+Math.floor(n*1.6), 15, 36),
+    hidden: clamp(3+Math.floor(n*0.7), 3, 12)
   };
 }
 function buildStage(n){
@@ -617,7 +623,11 @@ function launch(color,sx,sy,dest,onLand,dur){
 function tapScrew(s){
   if(s.state!=='board'||isHidden(s)) return;
   const h=findHolder(s.color);
-  if(!h && tray.length>=TRAY_MAX){ shakeT=.2; beep(140,.12,'square',.07); toast('자리가 없어요!'); return; }
+  if(!h && tray.length>=TRAY_MAX){
+    shakeT=.2; beep(140,.12,'square',.07); toast('트레이가 가득! 놓을 곳이 없어요');
+    checkOver();                       // 남은 수가 정말 없으면 여기서 실패로 끝난다
+    return;
+  }
   s.state='out';
   drill={x:s.x,y:s.y,t:0};
   beep(320,.22,'sawtooth',.08,900);
@@ -662,13 +672,13 @@ function releaseParts(){
     }
   }
 }
-function starsFor(mt){ return mt<=1?3:mt<=3?2:1; }
+function starsFor(mt){ return mt<=1?3:mt<=2?2:1; }   // 트레이를 얼마나 적게 썼는지
 function checkClear(){
   if(state!=='play') return;
   if(screws.some(s=>s.state==='board')||flying.length) return;
   state='clear';
   const stars=starsFor(maxTray);
-  const bonus=(TRAY_MAX-maxTray)*40+200;
+  const bonus=(TRAY_MAX-maxTray)*50+200;
   const coins=80+stageNo*10+stars*40;
   score+=bonus; wallet.coins+=coins;
   save.stars[stageNo]=Math.max(save.stars[stageNo]||0, stars);
@@ -858,14 +868,29 @@ function drawPart(p){
   }
   ctx.restore();
 }
-function drawScrew(x,y,color,r,spin,dim){
+const scache={};
+function buildScrewCache(){
+  const real=ctx;
+  for(const key of COLOR_KEYS){
+    const base=SCREW_R, pad=base*1.4, size=Math.max(8,Math.ceil(pad*2*DPR));
+    const off=document.createElement('canvas'); off.width=off.height=size;
+    const g=off.getContext('2d'); g.setTransform(DPR,0,0,DPR,0,0);
+    ctx=g; drawScrew(pad,pad,key,base,0,false,true); ctx=real;
+    scache[key]={c:off,half:pad,base};
+  }
+}
+function drawScrew(x,y,color,r,spin,dim,raw){
   const c=COLORS[color];
   ctx.save(); ctx.translate(x,y); ctx.rotate(spin||0);
   if(dim) ctx.globalAlpha=.38;
-  ctx.fillStyle='rgba(30,10,60,.35)';
-  ctx.beginPath(); ctx.arc(0,r*0.22,r,0,TAU); ctx.fill();
-  const spim=SPR.get('screws',color);
-  if(spim){ SPR.draw(spim,0,0,r*2.1); ctx.restore(); return; }
+  if(!raw){
+    ctx.fillStyle='rgba(30,10,60,.35)';
+    ctx.beginPath(); ctx.arc(0,r*0.22,r,0,TAU); ctx.fill();
+    const spim=SPR.get('screws',color);
+    if(spim){ SPR.draw(spim,0,0,r*2.1); ctx.restore(); return; }
+    const cc=scache[color];
+    if(cc){ const half=cc.half*(r/cc.base); ctx.drawImage(cc.c,-half,-half,half*2,half*2); ctx.restore(); return; }
+  }
   const g=ctx.createRadialGradient(-r*0.35,-r*0.4,r*0.15,0,0,r*1.08);
   g.addColorStop(0,c.light); g.addColorStop(.55,c.main); g.addColorStop(1,c.dark);
   ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,r,0,TAU); ctx.fill();
@@ -966,8 +991,9 @@ function drawDrill(){
 /* ── 입력 ────────────────────────────────────── */
 cv.addEventListener('pointerdown', e=>{
   if(state!=='play') return;
+  e.preventDefault(); kbMode=false;
   const r=cv.getBoundingClientRect(), px=e.clientX-r.left, py=e.clientY-r.top;
-  let best=null, bd=SCREW_R*1.6;
+  let best=null, bd=SCREW_R*2.1;      // 손가락 오차를 감안한 넉넉한 탭 판정
   for(const s of screws){
     if(s.state!=='board') continue;
     const d=Math.hypot(s.x-px,s.y-py);
@@ -1037,6 +1063,12 @@ function frame(now){
       drawScrew(s.x,s.y,s.color,SCREW_R, s.wob?Math.sin(s.wob*30)*0.25:0);
     }
   }
+  if(kbMode&&kbSel&&kbSel.state==='board'&&!isHidden(kbSel)){
+    ctx.save();
+    ctx.strokeStyle='#ffd45e'; ctx.lineWidth=3; ctx.setLineDash([6,5]);
+    ctx.beginPath(); ctx.arc(kbSel.x,kbSel.y,SCREW_R*1.55,0,TAU); ctx.stroke();
+    ctx.restore();
+  }
   for(const s of screws){
     if(s.state!=='board'||!isHidden(s)) continue;
     ctx.save(); ctx.globalAlpha=.30;
@@ -1061,6 +1093,44 @@ function frame(now){
   drawDrill();
   requestAnimationFrame(frame);
 }
+
+/* ── 키보드 조작 ─────────────────────────────── */
+let kbMode=false, kbSel=null;
+const tappable=()=>screws.filter(s=>s.state==='board'&&!isHidden(s));
+function kbMove(dir){
+  const list=tappable();
+  if(!list.length){ kbSel=null; return; }
+  if(!kbSel||kbSel.state!=='board'||isHidden(kbSel)){ kbSel=list[0]; return; }
+  let best=null,bs=Infinity;
+  for(const s of list){
+    if(s===kbSel) continue;
+    const dx=s.x-kbSel.x, dy=s.y-kbSel.y;
+    const fwd = dir==='left'?-dx : dir==='right'?dx : dir==='up'?-dy : dy;
+    const side= (dir==='left'||dir==='right')?Math.abs(dy):Math.abs(dx);
+    if(fwd<=2) continue;
+    const sc=fwd+side*1.8;
+    if(sc<bs){ bs=sc; best=s; }
+  }
+  if(best) kbSel=best;
+}
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='escape'){ hide('shopOvl'); hide('helpOvl'); return; }
+  if(k==='m'){ openMap(); e.preventDefault(); return; }
+  if(state!=='play') return;
+  if(k==='1'){ document.getElementById('bstHolder').click(); return; }
+  if(k==='2'){ document.getElementById('bstUndo').click(); return; }
+  if(k==='3'){ document.getElementById('bstColor').click(); return; }
+  if(k==='r'){ startStage(stageNo); return; }
+  const dirs={arrowleft:'left',a:'left',arrowright:'right',d:'right',
+              arrowup:'up',w:'up',arrowdown:'down',s:'down'};
+  if(dirs[k]){ e.preventDefault(); kbMode=true; kbMove(dirs[k]); return; }
+  if(k===' '||k==='enter'){
+    e.preventDefault(); kbMode=true;
+    if(!kbSel||kbSel.state!=='board'||isHidden(kbSel)) kbSel=tappable()[0];
+    if(kbSel){ const t=kbSel; kbMove('right'); if(kbSel===t) kbSel=null; tapScrew(t); }
+  }
+});
 
 /* ── 부스터 ──────────────────────────────────── */
 const show=id=>document.getElementById(id).classList.add('on');
@@ -1202,6 +1272,14 @@ document.getElementById('nextBtn').onclick=()=>startStage(Math.min(stageNo+1,TOT
 document.getElementById('retryBtn').onclick=()=>startStage(stageNo);
 document.getElementById('resetBtn').onclick=()=>{ if(state==='play') startStage(stageNo); };
 
+/* 테스트용 훅: ?debug 를 붙였을 때만 내부 상태를 노출한다 */
+if(location.search.includes('debug')) window.__dbg={
+  get screws(){return screws}, get parts(){return parts}, get state(){return state},
+  get tray(){return tray}, get holders(){return holders}, get items(){return items},
+  get wallet(){return wallet}, get history(){return history}, get kbSel(){return kbSel},
+  get maxTray(){return maxTray}, get queue(){return queue},
+  isHidden, startStage
+};
 layout(); buildStage(save.unlocked); state='menu'; buildMap();
 requestAnimationFrame(frame);
 })();
