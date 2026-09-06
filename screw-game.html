@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>나사 풀기! · Screw Nuts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Noto+Sans+KR:wght@500;700;900&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Noto+Sans+KR:wght@500;700;900&display=swap"></noscript>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'Baloo 2','Noto Sans KR',system-ui,sans-serif;
+    background:#6b4fd8;color:#fff;display:flex;align-items:center;justify-content:center;
+    touch-action:none;user-select:none;
+  }
+  #stage{position:relative;width:100%;height:100%;max-width:520px;max-height:100dvh;overflow:hidden}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+  #hud{position:relative;z-index:5;display:flex;gap:7px;align-items:center;
+    padding:calc(env(safe-area-inset-top) + 8px) 10px 0;}
+  .pill{display:flex;align-items:center;gap:6px;background:linear-gradient(#8a6cf0,#5a3fc0);
+    border:2px solid rgba(255,255,255,.6);border-radius:999px;padding:3px 12px 3px 4px;
+    box-shadow:0 3px 0 rgba(0,0,0,.22);font-size:15px;font-weight:800;white-space:nowrap}
+  .pill .ico{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:14px;
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.2)}
+  .ico.lv{background:linear-gradient(#ffd45e,#f4a623)}
+  .ico.st{background:linear-gradient(#8fe3a0,#33ad5c)}
+  .ico.coin{background:linear-gradient(#ffe17a,#f0a72b)}
+  .spacer{flex:1}
+  .iconbtn{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.55);
+    background:rgba(255,255,255,.16);color:#fff;font-size:16px;cursor:pointer;flex:none}
+  #boosters{position:absolute;left:0;right:0;bottom:0;z-index:6;height:11%;min-height:70px;
+    display:flex;gap:8px;align-items:center;justify-content:center;
+    padding:0 10px calc(env(safe-area-inset-bottom) + 4px);
+    background:linear-gradient(rgba(38,20,86,0),rgba(38,20,86,.55) 45%)}
+  .bst{position:relative;width:62px;height:54px;border-radius:16px;border:2px solid rgba(255,255,255,.45);
+    background:linear-gradient(#7a5fe0,#4a32a8);box-shadow:0 4px 0 rgba(0,0,0,.28);
+    color:#fff;font-size:22px;cursor:pointer;display:grid;place-items:center;font-family:inherit}
+  .bst:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+  .bst .cnt{position:absolute;right:-5px;top:-6px;min-width:22px;height:22px;border-radius:11px;
+    background:linear-gradient(#ffd964,#f5a324);color:#5a3200;font-size:12px;font-weight:800;
+    display:grid;place-items:center;padding:0 5px;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+  .bst .cnt.zero{background:linear-gradient(#a49ec4,#6d668f);color:#26213b}
+  .bst .lbl{position:absolute;bottom:-15px;left:0;right:0;text-align:center;font-size:10px;
+    font-family:'Noto Sans KR',sans-serif;font-weight:700;color:#ded4ff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+  #shopOvl .list{width:100%;max-width:360px;flex:none;display:flex;flex-direction:column;gap:10px}
+  .item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.10);
+    border:2px solid rgba(255,255,255,.22);border-radius:16px;padding:10px 12px}
+  .item .emo{width:46px;height:46px;border-radius:12px;background:linear-gradient(#7a5fe0,#4a32a8);
+    display:grid;place-items:center;font-size:24px;flex:none}
+  .item .txt{flex:1;text-align:left}
+  .item .txt b{font-size:17px}
+  .item .txt small{display:block;font-family:'Noto Sans KR',sans-serif;font-size:11.5px;color:#d5c9ff;
+    font-weight:500;line-height:1.4;word-break:keep-all}
+  .item .buy{border:none;border-radius:999px;padding:8px 14px;font-family:inherit;font-size:15px;
+    font-weight:800;color:#5a3200;background:linear-gradient(#ffd964,#f5a324);cursor:pointer;
+    box-shadow:0 3px 0 #c67a12;white-space:nowrap}
+  .item .buy:disabled{background:linear-gradient(#a49ec4,#6d668f);color:#26213b;box-shadow:0 3px 0 #4b4569}
+  .item .have{font-size:13px;color:#ffd45e;font-weight:800;min-width:34px}
+  #toast{position:absolute;left:50%;top:30%;transform:translateX(-50%) scale(.7);z-index:6;
+    font-size:30px;font-weight:800;opacity:0;pointer-events:none;white-space:nowrap;
+    text-shadow:0 0 14px rgba(255,180,60,.8),0 3px 0 rgba(0,0,0,.3)}
+  #toast.show{animation:pop .8s ease-out}
+  @keyframes pop{0%{opacity:0;transform:translateX(-50%) scale(.6)}
+    25%{opacity:1;transform:translateX(-50%) scale(1.12)}
+    70%{opacity:1;transform:translateX(-50%) scale(1)}
+    100%{opacity:0;transform:translateX(-50%) scale(1) translateY(-22px)}}
+
+  .ovl{position:absolute;inset:0;z-index:20;display:none;flex-direction:column;align-items:center;
+    justify-content:center;gap:12px;text-align:center;padding:22px 22px 34px;
+    overflow-y:auto;overscroll-behavior:contain;
+    background:rgba(38,20,86,.86);backdrop-filter:blur(4px)}
+  .ovl.on{display:flex}
+  .ovl>*{flex:none;max-width:100%}
+  .ovl h2{font-size:34px;text-shadow:0 3px 0 rgba(0,0,0,.3)}
+  .ovl p{font-size:15px;line-height:1.75;color:#e2d9ff;font-family:'Noto Sans KR',sans-serif;font-weight:500}
+  .ovl .big{font-size:50px;color:#ffd45e;text-shadow:0 4px 0 #a35f10}
+  .btn{margin-top:6px;padding:12px 34px;border:none;border-radius:999px;cursor:pointer;
+    font-family:inherit;font-size:20px;font-weight:800;color:#5a3200;
+    background:linear-gradient(#ffd964,#f5a324);box-shadow:0 5px 0 #c67a12,0 8px 14px rgba(0,0,0,.3)}
+  .btn.alt{color:#fff;background:linear-gradient(#9d84ff,#6b4fd8);box-shadow:0 5px 0 #4a32a8}
+  .btn.sm{font-size:16px;padding:9px 22px}
+  .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .stars{font-size:40px;letter-spacing:4px}
+  .stars .off{opacity:.25}
+
+  /* ── 스테이지 맵 ── */
+  #mapOvl{justify-content:flex-start;padding:0;background:linear-gradient(#5b3fc4,#3d2593)}
+  #mapTop{position:relative;z-index:2;width:100%;display:flex;align-items:center;gap:8px;
+    padding:calc(env(safe-area-inset-top) + 12px) 14px 10px;
+    background:linear-gradient(rgba(40,20,100,.95),rgba(40,20,100,0))}
+  #mapTop h2{font-size:24px;flex:1;text-align:left}
+  #mapScroll{position:relative;flex:1;width:100%;overflow-y:auto;overflow-x:hidden;
+    padding:10px 0 40px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+  #mapPath{position:relative;margin:0 auto;width:100%;max-width:460px}
+  .node{
+    position:absolute;width:62px;height:62px;border-radius:50%;border:none;cursor:pointer;
+    font-family:inherit;font-size:22px;font-weight:800;color:#fff;
+    background:linear-gradient(#ffcf55,#ef9d18);box-shadow:0 5px 0 #b96f08,0 8px 12px rgba(0,0,0,.3);
+    display:grid;place-items:center;line-height:1;
+  }
+  .node.locked{background:linear-gradient(#8a83b5,#5d5686);box-shadow:0 5px 0 #423c66;color:#d7d2f0;cursor:default}
+  .node.done{background:linear-gradient(#8be07d,#3aa845);box-shadow:0 5px 0 #26803a}
+  .node.cur{animation:bounce 1.1s ease-in-out infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  .node .em{position:absolute;top:-9px;right:-7px;font-size:17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+  .node .st{position:absolute;bottom:-13px;font-size:12px;letter-spacing:-1px;
+    text-shadow:0 1px 2px rgba(0,0,0,.5);white-space:nowrap}
+  .node .st .off{opacity:.3}
+  .dot{position:absolute;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.30)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="pill"><span class="ico lv">🔩</span><span>Stage <span id="lvTxt">1</span></span></div>
+    <div class="pill"><span class="ico st">⭐</span><span id="starTxt">0</span></div>
+    <div class="pill"><span class="ico coin">🪙</span><span id="coinTxt">0</span></div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="mapBtn">🗺️</button>
+    <button class="iconbtn" id="soundBtn">🔊</button>
+    <button class="iconbtn" id="resetBtn">↺</button>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="boosters">
+    <button class="bst" id="bstHolder">➕<span class="cnt" id="cntHolder">0</span><span class="lbl">홀더</span></button>
+    <button class="bst" id="bstUndo">↩️<span class="cnt" id="cntUndo">0</span><span class="lbl">되돌리기</span></button>
+    <button class="bst" id="bstColor">🎨<span class="cnt" id="cntColor">0</span><span class="lbl">색 변경</span></button>
+    <button class="bst" id="bstShop">🛒<span class="lbl">상점</span></button>
+  </div>
+
+  <!-- 스테이지 맵 -->
+  <div class="ovl on" id="mapOvl">
+    <div id="mapTop">
+      <h2>🔧 나사 풀기!</h2>
+      <div class="pill"><span class="ico st">⭐</span><span id="mapStars">0</span></div>
+      <div class="pill"><span class="ico coin">🪙</span><span id="mapCoins">0</span></div>
+      <button class="iconbtn" id="mapShopBtn">🛒</button>
+    </div>
+    <div id="mapScroll"><div id="mapPath"></div></div>
+  </div>
+
+  <!-- 튜토리얼 -->
+  <div class="ovl" id="helpOvl">
+    <h2>어떻게 하나요?</h2>
+    <p>
+      나사를 <b>탭하면 풀려서</b> 같은 색 홀더로 들어가요.<br>
+      한 홀더에 같은 색 <b>3개</b>를 모으면 사라집니다.<br>
+      맞는 홀더가 없으면 아래 <b>임시 트레이</b>로 가고,<br>
+      트레이가 가득 차면 실패!<br><br>
+      나사를 다 빼면 조각이 떨어지고,<br>
+      그 아래 <b>숨어 있던 나사</b>가 드러나요.<br>
+      트레이를 적게 쓸수록 <b>별</b>을 많이 받습니다.
+    </p>
+    <button class="btn" id="helpBtn">알겠어요</button>
+  </div>
+
+  <!-- 클리어 -->
+  <div class="ovl" id="clearOvl">
+    <h2 id="clearTitle">스테이지 클리어!</h2>
+    <div class="stars" id="clearStars"></div>
+    <div class="big" id="clearScore">0</div>
+    <p id="clearMsg"></p>
+    <div class="row">
+      <button class="btn alt sm" id="clearMapBtn">맵으로</button>
+      <button class="btn" id="nextBtn">다음 스테이지</button>
+    </div>
+  </div>
+
+  <!-- 실패 -->
+  <div class="ovl" id="overOvl">
+    <h2>트레이가 가득!</h2>
+    <div class="big">😵</div>
+    <p id="overMsg"></p>
+    <div class="row">
+      <button class="btn alt sm" id="overMapBtn">맵으로</button>
+      <button class="btn" id="retryBtn">다시 하기</button>
+    </div>
+  </div>
+
+  <div class="ovl" id="shopOvl">
+    <h2>🛒 상점</h2>
+    <p>보유 코인 <b id="shopCoins">0</b> 🪙</p>
+    <div class="list" id="shopList"></div>
+    <button class="btn" id="shopCloseBtn">닫기</button>
+  </div>
+</div>
+
+<script src="assets/sprites.js"></script>
+<script>
+(() => {
+'use strict';
+const TAU = Math.PI*2;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const rand=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[(Math.random()*a.length)|0];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;};
+const norm=a=>{while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a;};
+
+/* ── 나사 색 ─────────────────────────────────── */
+const COLORS = {
+  red:   {main:'#ff5a5a',dark:'#c22b2b',light:'#ff9c9c'},
+  blue:  {main:'#4aa8ff',dark:'#1f66c9',light:'#9fd2ff'},
+  green: {main:'#4fce5d',dark:'#249239',light:'#a3efa8'},
+  yellow:{main:'#ffc632',dark:'#d18f00',light:'#ffe49b'},
+  purple:{main:'#b06cff',dark:'#7233c4',light:'#dcb9ff'},
+  orange:{main:'#ff8a3d',dark:'#cc5310',light:'#ffc39a'},
+  pink:  {main:'#ff6fc0',dark:'#c62d8c',light:'#ffb6e0'},
+  cyan:  {main:'#3ad6d6',dark:'#12999e',light:'#a7f0f0'}
+};
+const COLOR_KEYS = Object.keys(COLORS);
+
+/* ── 오브젝트 조각 색 ────────────────────────── */
+const MAT = {
+  pink:  {main:'#ff9ec6',dark:'#e0578f'}, red:{main:'#ff7b7b',dark:'#d13c3c'},
+  green: {main:'#96d96a',dark:'#4f9e35'}, purple:{main:'#c39bf2',dark:'#8a55cf'},
+  yellow:{main:'#ffd86b',dark:'#e0a613'}, cyan:{main:'#7fdce6',dark:'#2f9fb5'},
+  blue:  {main:'#8fb8f5',dark:'#4a72c9'}, orange:{main:'#ffb073',dark:'#e07626'},
+  wood:  {main:'#e8b06a',dark:'#b3763a'}, wood2:{main:'#d99a52',dark:'#a1652c'},
+  tan:   {main:'#f2c987',dark:'#c1904d'}, brown:{main:'#d9a35f',dark:'#a3702f'},
+  cream: {main:'#fff0d4',dark:'#d6b98a'}, mint:{main:'#a9e8cf',dark:'#4faa8c'},
+  grey:  {main:'#cfd4e6',dark:'#8f96b5'}
+};
+
+/* ── 오브젝트 템플릿 (단위 정사각형 0..1 좌표) ── */
+const TEMPLATES = [
+  {name:'풍선 다발', emoji:'🎈', build:()=>({parts:[
+    {t:'circle',x:.32,y:.21,w:.29,z:2,style:'balloon',c:'pink',  nh:3,str:1},
+    {t:'circle',x:.53,y:.14,w:.31,z:3,style:'balloon',c:'red',   nh:3,str:1},
+    {t:'circle',x:.71,y:.22,w:.28,z:4,style:'balloon',c:'green', nh:3,str:1},
+    {t:'circle',x:.49,y:.33,w:.27,z:5,style:'balloon',c:'purple',nh:3,str:1},
+    {t:'bar',   x:.50,y:.74,w:.56,h:.19,a:0,z:0,style:'basket',c:'wood', nh:3},
+    {t:'bar',   x:.50,y:.88,w:.46,h:.14,a:0,z:1,style:'basket',c:'wood2',nh:2},
+    {t:'circle',x:.31,y:.66,w:.16,z:6,style:'flower',c:'yellow',nh:1},
+    {t:'circle',x:.68,y:.67,w:.15,z:6,style:'flower',c:'cyan',  nh:1}
+  ], hid:[[.42,.175,2],[.60,.29,4],[.31,.68,0],[.67,.69,0],[.44,.25,2]]})},
+
+  {name:'곰인형', emoji:'🧸', build:()=>({parts:[
+    {t:'circle',x:.31,y:.19,w:.17,z:0,style:'fur',c:'brown',nh:1},
+    {t:'circle',x:.69,y:.19,w:.17,z:0,style:'fur',c:'brown',nh:1},
+    {t:'circle',x:.50,y:.28,w:.36,z:1,style:'fur',c:'tan',  nh:3},
+    {t:'circle',x:.50,y:.35,w:.20,h:.16,z:2,style:'face',c:'cream',nh:1},
+    {t:'circle',x:.50,y:.64,w:.40,h:.44,z:1,style:'fur',c:'tan',nh:4},
+    {t:'bar',   x:.22,y:.57,w:.26,h:.14,a:-0.55,z:2,style:'fur',c:'brown',nh:2},
+    {t:'bar',   x:.78,y:.57,w:.26,h:.14,a:0.55, z:2,style:'fur',c:'brown',nh:2},
+    {t:'bar',   x:.36,y:.90,w:.23,h:.15,a:0.28, z:0,style:'fur',c:'brown',nh:2},
+    {t:'bar',   x:.64,y:.90,w:.23,h:.15,a:-0.28,z:0,style:'fur',c:'brown',nh:2},
+    {t:'bar',   x:.50,y:.48,w:.32,h:.10,a:0,z:3,style:'plank',c:'red',nh:2}
+  ], hid:[[.50,.33,1],[.50,.52,1],[.35,.23,0],[.65,.23,0]]})},
+
+  {name:'꽃', emoji:'🌸', build:()=>{
+    const parts=[], hid=[];
+    const petalC=['pink','red','purple','orange','yellow','cyan'];
+    for(let i=0;i<6;i++){
+      const a=i*TAU/6 - Math.PI/2;
+      parts.push({t:'circle',x:.5+Math.cos(a)*.19,y:.40+Math.sin(a)*.19,w:.32,h:.21,a:a,
+                  z:i,style:'petal',c:petalC[i],nh:2});
+      hid.push([.5+Math.cos(a)*.11, .40+Math.sin(a)*.11, i]);          // 꽃술 아래
+      const b=a+TAU/12;
+      if(i<5) hid.push([.5+Math.cos(b)*.20, .40+Math.sin(b)*.20, i]);  // 옆 꽃잎 아래
+    }
+    parts.push({t:'circle',x:.50,y:.40,w:.22,z:6,style:'core',c:'yellow',nh:2});
+    parts.push({t:'bar',x:.50,y:.79,w:.34,h:.10,a:Math.PI/2,z:0,style:'plank',c:'green',nh:2});
+    parts.push({t:'circle',x:.34,y:.80,w:.22,h:.12,z:1,style:'leaf',c:'mint',nh:1});
+    parts.push({t:'circle',x:.66,y:.88,w:.20,h:.11,z:1,style:'leaf',c:'mint',nh:1});
+    return {parts, hid};
+  }},
+
+  {name:'아이스크림', emoji:'🍦', build:()=>({parts:[
+    {t:'tri',   x:.50,y:.74,w:.36,h:.46,a:Math.PI,z:0,style:'cone',c:'wood',nh:3},
+    {t:'circle',x:.41,y:.40,w:.33,z:1,style:'scoop',c:'pink', nh:3},
+    {t:'circle',x:.61,y:.31,w:.30,z:2,style:'scoop',c:'cream',nh:3},
+    {t:'circle',x:.49,y:.19,w:.28,z:3,style:'scoop',c:'mint', nh:3},
+    {t:'circle',x:.49,y:.08,w:.12,z:4,style:'plain',c:'red',  nh:1}
+  ], hid:[[.46,.53,0],[.51,.355,1],[.55,.25,2],[.49,.115,3],[.40,.50,0]]})},
+
+  {name:'로켓', emoji:'🚀', build:()=>({parts:[
+    {t:'tri',   x:.28,y:.74,w:.26,h:.28,a:0.5, z:0,style:'plain',c:'blue',nh:1},
+    {t:'tri',   x:.72,y:.74,w:.26,h:.28,a:-0.5,z:0,style:'plain',c:'blue',nh:1},
+    {t:'tri',   x:.50,y:.92,w:.22,h:.16,a:Math.PI,z:0,style:'plain',c:'orange',nh:1},
+    {t:'bar',   x:.50,y:.52,w:.52,h:.28,a:Math.PI/2,z:1,style:'plank',c:'cream',nh:4},
+    {t:'tri',   x:.50,y:.19,w:.30,h:.22,z:2,style:'plain',c:'red',nh:1},
+    {t:'circle',x:.50,y:.44,w:.18,z:3,style:'window',c:'cyan',nh:1}
+  ], hid:[[.50,.44,1],[.50,.28,1],[.44,.44,1],[.56,.44,1]]})},
+
+  {name:'자동차', emoji:'🚗', build:()=>({parts:[
+    {t:'bar',   x:.50,y:.36,w:.40,h:.24,a:0,z:0,style:'plank',c:'cream',nh:2},
+    {t:'bar',   x:.50,y:.56,w:.66,h:.26,a:0,z:1,style:'plank',c:'red',  nh:4},
+    {t:'circle',x:.30,y:.74,w:.24,z:2,style:'wheel',c:'grey',nh:1},
+    {t:'circle',x:.70,y:.74,w:.24,z:2,style:'wheel',c:'grey',nh:1},
+    {t:'circle',x:.50,y:.36,w:.18,z:2,style:'window',c:'cyan',nh:1},
+    {t:'bar',   x:.50,y:.90,w:.60,h:.10,a:0,z:0,style:'plank',c:'wood2',nh:2}
+  ], hid:[[.50,.36,0],[.30,.67,1],[.70,.67,1],[.50,.46,0]]})}
+];
+
+/* ── 스프라이트 로더 (없으면 벡터로 폴백) ── */
+const SPR=(()=>{
+  const cfg=window.GAME_SPRITES||{}, base=cfg.base||'assets/', cache={};
+  function img(path){
+    if(!path) return null;
+    if(path in cache) return cache[path];
+    const im=new Image();
+    im.onload=()=>{im._ok=true;}; im.onerror=()=>{cache[path]=null;};
+    im.src=base+path; cache[path]=im; return im;
+  }
+  return {
+    get(group,key){
+      const g=(window.GAME_SPRITES||{})[group];
+      const im=img(g&&g[key]);
+      return im&&im._ok?im:null;
+    },
+    draw(im,x,y,h){ const w=h*(im.naturalWidth/im.naturalHeight); ctx.drawImage(im,x-w/2,y-h/2,w,h); },
+    fit(im,w,h){ ctx.drawImage(im,-w/2,-h/2,w,h); }
+  };
+})();
+
+/* ── 진행 저장 ───────────────────────────────── */
+const SAVE_KEY='screwNutsSave';
+const TOTAL_STAGES=40;
+const store={
+  read(k,def){ try{const r=localStorage.getItem(k); return r?JSON.parse(r):def;}catch(e){return def;} },
+  write(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+};
+let save=Object.assign({unlocked:1,stars:{},best:0}, store.read(SAVE_KEY,{}));
+let wallet=store.read('gameWallet',{coins:120});
+let items =store.read('gameItems',{bomb:1,upgrade:1,refill:1,holder:1,undo:1,recolor:1});
+function persist(){ store.write(SAVE_KEY,save); store.write('gameWallet',wallet); store.write('gameItems',items); }
+const totalStars=()=>Object.values(save.stars).reduce((a,b)=>a+b,0);
+
+/* ── 캔버스 ──────────────────────────────────── */
+const cv=document.getElementById('game'), ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1;
+let board={x:0,y:0,w:0,h:0}, holderBox={y:0,w:0,h:0}, trayBox={y:0,w:0,h:0};
+let SCREW_R=16, UNIT=1, origin={x:0,y:0};
+
+function layout(){
+  const st=document.getElementById('stage');
+  const old={...board};
+  W=st.clientWidth; H=st.clientHeight;
+  DPR=Math.min(devicePixelRatio||1,2.5);
+  cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+
+  board.x=W*0.045; board.w=W*0.91;
+  board.y=H*0.105; board.h=H*0.500;
+  holderBox.y=H*0.635; holderBox.h=H*0.125; holderBox.w=board.w;
+  trayBox.y=H*0.790;   trayBox.h=H*0.072;   trayBox.w=board.w;
+  UNIT=Math.min(board.w, board.h)*0.98;
+  origin={x:board.x+board.w/2-UNIT/2, y:board.y+board.h/2-UNIT/2};
+  SCREW_R=UNIT*0.040;
+
+  if(old.w){
+    const sx=board.w/old.w, sy=board.h/old.h;
+    for(const p of parts){
+      p.x=board.x+(p.x-old.x)*sx; p.y=board.y+(p.y-old.y)*sy;
+      p.w*=sx; p.h*=sx;
+      for(const h of p.holes){h.lx*=sx; h.ly*=sx;}
+    }
+    for(const s of screws){ s.x=board.x+(s.x-old.x)*sx; s.y=board.y+(s.y-old.y)*sy; }
+  }
+  if(holders.length) layoutHolders();
+}
+addEventListener('resize', layout);
+
+/* ── 상태 ────────────────────────────────────── */
+let parts=[], screws=[], holders=[], queue=[], tray=[], flying=[], particles=[];
+let stageNo=1, score=0, state='menu', shakeT=0, drill=null, maxTray=0, tplName='';
+const TRAY_MAX=5, HOLDER_SLOTS=3;
+let holderN=3;                      // ➕부스터로 4개까지 늘어남
+let history=[];                     // 되돌리기용
+
+/* ── 사운드 ──────────────────────────────────── */
+let actx=null, soundOn=true;
+function beep(f,d,type,vol,slide){
+  if(!soundOn) return;
+  try{
+    actx=actx||new (AudioContext||webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(f,actx.currentTime);
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,actx.currentTime+d);
+    g.gain.setValueAtTime(vol||.12,actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+d);
+  }catch(e){}
+}
+document.getElementById('soundBtn').onclick=e=>{soundOn=!soundOn;e.currentTarget.textContent=soundOn?'🔊':'🔇';};
+
+/* ── 조각 기하 ───────────────────────────────── */
+function toLocal(p,x,y){
+  const c=Math.cos(-p.a), s=Math.sin(-p.a), dx=x-p.x, dy=y-p.y;
+  return {lx:dx*c-dy*s, ly:dx*s+dy*c};
+}
+function toWorld(p,lx,ly){
+  const c=Math.cos(p.a), s=Math.sin(p.a);
+  return {x:p.x+lx*c-ly*s, y:p.y+lx*s+ly*c};
+}
+function contains(p,x,y,pad){
+  const {lx,ly}=toLocal(p,x,y), m=pad||0;
+  if(p.t==='circle'){
+    const a=p.w/2+m, b=p.h/2+m;
+    return (lx*lx)/(a*a)+(ly*ly)/(b*b) <= 1;
+  }
+  if(p.t==='bar') return Math.abs(lx)<=p.w/2+m && Math.abs(ly)<=p.h/2+m;
+  // tri: 꼭짓점 (0,-h/2), 밑변 y=+h/2
+  const h=p.h+2*m, w=p.w+2*m;
+  const t=(ly+h/2)/h;
+  return t>=0 && t<=1 && Math.abs(lx) <= (w/2)*t;
+}
+function samplePoint(p){
+  let lx,ly;
+  if(p.t==='circle'){
+    const a=rand(0,TAU), r=Math.sqrt(Math.random())*0.62;
+    lx=Math.cos(a)*p.w/2*r; ly=Math.sin(a)*p.h/2*r;
+  } else if(p.t==='bar'){
+    lx=rand(-1,1)*Math.max(0,p.w/2-p.h*0.55); ly=rand(-.22,.22)*p.h;
+  } else {
+    const t=rand(0.36,0.90);
+    lx=rand(-1,1)*(p.w/2)*t*0.66; ly=-p.h/2+t*p.h;
+  }
+  return toWorld(p,lx,ly);
+}
+function sampleOverlap(p){          // 가장자리 쪽까지 포함해 샘플 (가려진 나사 배치용)
+  let lx,ly;
+  if(p.t==='circle'){
+    const a=rand(0,TAU), r=rand(0.25,0.92);
+    lx=Math.cos(a)*p.w/2*r; ly=Math.sin(a)*p.h/2*r;
+  } else if(p.t==='bar'){
+    lx=rand(-1,1)*Math.max(0,p.w/2-p.h*0.35); ly=rand(-.32,.32)*p.h;
+  } else {
+    const t=rand(0.30,0.95);
+    lx=rand(-1,1)*(p.w/2)*t*0.85; ly=-p.h/2+t*p.h;
+  }
+  return toWorld(p,lx,ly);
+}
+function defaultHoles(p){
+  const out=[];
+  const n=p.nh||1;
+  if(p.t==='circle'){
+    if(n===1) out.push([0,0]);
+    else for(let i=0;i<n;i++){
+      const a=-Math.PI/2 + i*TAU/n;
+      out.push([Math.cos(a)*p.w*0.24, Math.sin(a)*p.h*0.24]);
+    }
+  } else if(p.t==='bar'){
+    for(let i=0;i<n;i++){
+      const t=n===1?0:(i/(n-1)-0.5)*(p.w-p.h*0.85);
+      out.push([t,0]);
+    }
+  } else {
+    if(n===1) out.push([0,p.h*0.16]);
+    else for(let i=0;i<n;i++){
+      const t=0.45+0.42*(i/(Math.max(1,n-1)));
+      out.push([ (i%2?1:-1)*(p.w/2)*t*0.45, -p.h/2+t*p.h ]);
+    }
+  }
+  return out.map(([lx,ly])=>toWorld(p,lx,ly));
+}
+const pinsOf=p=>screws.filter(s=>s.state==='board' && s.z>=p.z && contains(p,s.x,s.y));
+const isHidden=s=>parts.some(p=>!p.falling && p.z>s.z && contains(p,s.x,s.y,-SCREW_R*0.35));
+
+/* ── 스테이지 생성 ───────────────────────────── */
+function stageConfig(n){
+  const tpl=TEMPLATES[(n-1)%TEMPLATES.length];
+  return {
+    tpl,
+    colors: clamp(3+Math.floor((n-1)/4), 3, 6),
+    total:  clamp(12+Math.floor(n*1.2)*1, 12, 30),
+    hidden: clamp(3+Math.floor(n*0.5), 3, 9)
+  };
+}
+function buildStage(n){
+  stageNo=n; maxTray=0;
+  parts=[]; screws=[]; flying=[]; particles=[]; tray=[];
+  const cfg=stageConfig(n);
+  tplName=cfg.tpl.name;
+
+  // 템플릿 → 픽셀 좌표
+  const spec=cfg.tpl.build();
+  spec.parts.forEach((d,i)=>{
+    parts.push({
+      id:i, t:d.t, z:d.z, style:d.style, c:d.c, str:d.str||0, nh:d.nh||1,
+      x:origin.x+d.x*UNIT, y:origin.y+d.y*UNIT,
+      w:d.w*UNIT, h:(d.h||d.w)*UNIT, a:d.a||0,
+      holes:[], falling:false, vx:0, vy:0, va:0, swing:0, alpha:1
+    });
+  });
+
+  // 구멍 배치
+  const minD=SCREW_R*1.95;
+  const holes=[];
+  const free=(x,y)=>
+    x>board.x+SCREW_R*0.5 && x<board.x+board.w-SCREW_R*0.5 &&
+    y>board.y+SCREW_R*0.5 && y<board.y+board.h-SCREW_R*0.5 &&
+    !holes.some(o=>Math.hypot(o.x-x,o.y-y)<minD);
+  const coveredBy=(z,x,y)=>parts.some(q=>q.z>z && contains(q,x,y,-SCREW_R*0.35));
+
+  // 템플릿이 지정한 '가려지는' 구멍 우선 배치
+  const hiddenNow=()=>holes.filter(h=>coveredBy(h.z,h.x,h.y)).length;
+  for(const [hx,hy,hz] of shuffle((spec.hid||[]).slice())){
+    if(hiddenNow() >= cfg.hidden+2) break;
+    const x=origin.x+hx*UNIT, y=origin.y+hy*UNIT;
+    const owner=parts.find(q=>q.z===hz && contains(q,x,y,-SCREW_R*0.4));
+    if(!owner || !coveredBy(hz,x,y) || !free(x,y)) continue;
+    holes.push({x,y,z:hz,keep:true});      // keep: 위층 구멍과 병합되지 않음
+  }
+  for(const p of parts){
+    for(const h of defaultHoles(p)){
+      const near=holes.find(o=>Math.hypot(o.x-h.x,o.y-h.y)<minD);
+      if(near){ if(!near.keep) near.z=Math.max(near.z,p.z); continue; }
+      if(!free(h.x,h.y)) continue;
+      holes.push({x:h.x,y:h.y,z:p.z});
+    }
+  }
+  for(const p of parts){           // 조각마다 최소 1개의 핀
+    if(holes.some(h=>h.z>=p.z && contains(p,h.x,h.y))) continue;
+    let placed=false;
+    for(let g=0; g<80 && !placed; g++){
+      const w0 = g===0 ? {x:p.x,y:p.y} : sampleOverlap(p);
+      if(!contains(p,w0.x,w0.y,-SCREW_R*0.4) || !free(w0.x,w0.y)) continue;
+      holes.push({x:w0.x,y:w0.y,z:p.z}); placed=true;
+    }
+    if(!placed) holes.push({x:p.x,y:p.y,z:p.z});
+  }
+  const lower=parts.filter(q=>q.z < Math.max(...parts.map(o=>o.z)));
+  for(let g=0; g<900 && lower.length && hiddenNow()<cfg.hidden; g++){
+    const p=pick(lower), w0=sampleOverlap(p);
+    if(!contains(p,w0.x,w0.y,-SCREW_R*0.5)) continue;
+    if(!coveredBy(p.z,w0.x,w0.y) || !free(w0.x,w0.y)) continue;
+    holes.push({x:w0.x,y:w0.y,z:p.z});
+  }
+  for(let g=0; g<800 && holes.length<cfg.total; g++){
+    const p=pick(parts), w0=samplePoint(p);
+    if(!free(w0.x,w0.y)) continue;
+    holes.push({x:w0.x,y:w0.y,z:p.z});
+  }
+  // 3의 배수 맞추기
+  const removable=()=>holes.filter(h=>{
+    const pinned=parts.filter(p=>h.z>=p.z && contains(p,h.x,h.y));
+    return pinned.every(p=>holes.some(o=>o!==h && o.z>=p.z && contains(p,o.x,o.y)));
+  });
+  while(holes.length%3!==0){
+    let added=false;
+    for(let g=0; g<400 && !added; g++){          // 우선 구멍을 더 넣어 맞춘다
+      const p=pick(parts), w0=sampleOverlap(p);
+      if(!contains(p,w0.x,w0.y,-SCREW_R*0.4) || !free(w0.x,w0.y)) continue;
+      holes.push({x:w0.x,y:w0.y,z:p.z}); added=true;
+    }
+    if(added) continue;
+    const cand=removable();                       // 안 되면 '유일한 핀이 아닌' 구멍만 제거
+    if(!cand.length) break;
+    holes.splice(holes.indexOf(pick(cand)),1);
+  }
+  while(holes.length%3!==0 && holes.length>3) holes.pop();
+
+  // 색 배정
+  const palette=shuffle(COLOR_KEYS.slice()).slice(0,cfg.colors);
+  const bag=[];
+  for(let i=0;i<holes.length/3;i++){ const c=palette[i%palette.length]; bag.push(c,c,c); }
+  shuffle(bag);
+  holes.forEach((h,i)=>{
+    screws.push({id:i,x:h.x,y:h.y,z:h.z,color:bag[i],state:'board',wob:0});
+    for(const p of parts) if(p.z<=h.z && contains(p,h.x,h.y)){
+      const l=toLocal(p,h.x,h.y); p.holes.push({lx:l.lx,ly:l.ly});
+    }
+  });
+
+  // 홀더 대기열
+  const counts={}; for(const c of bag) counts[c]=(counts[c]||0)+1;
+  queue=[]; for(const c in counts) for(let i=0;i<counts[c]/3;i++) queue.push(c);
+  shuffle(queue);
+  holderN=3; history=[];
+  holders=[]; for(let i=0;i<holderN;i++) holders.push({color:queue.shift()||null,slots:[],pop:0,slide:0});
+  layoutHolders();
+
+  state='play'; syncHud();
+}
+function layoutHolders(){
+  const gap=board.w*0.038, hw=(board.w-gap*(holders.length-1))/holders.length;
+  holders.forEach((h,i)=>{
+    h.w=hw; h.h=holderBox.h;
+    h.x=board.x+i*(hw+gap)+hw/2; h.y=holderBox.y+holderBox.h/2;
+  });
+}
+function syncHud(){
+  document.getElementById('lvTxt').textContent=stageNo;
+  document.getElementById('starTxt').textContent=totalStars();
+  document.getElementById('coinTxt').textContent=wallet.coins;
+  for(const [id,k] of [['cntHolder','holder'],['cntUndo','undo'],['cntColor','recolor']]){
+    const el=document.getElementById(id);
+    el.textContent=items[k]||0;
+    el.classList.toggle('zero',!(items[k]>0));
+  }
+}
+function toast(t){
+  const el=document.getElementById('toast');
+  el.textContent=t; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+
+/* ── 나사 뽑기 ───────────────────────────────── */
+const slotPos=(h,i)=>({x:h.x+(i-1)*h.w*0.26, y:h.y+h.h*0.06});
+function trayPos(i){
+  const g=trayBox.w*0.012, sw=(trayBox.w-g*(TRAY_MAX-1))/TRAY_MAX;
+  return {x:board.x+i*(sw+g)+sw/2, y:trayBox.y+trayBox.h/2, sw};
+}
+const findHolder=c=>holders.find(h=>h.color===c && h.slots.length<HOLDER_SLOTS);
+function launch(color,sx,sy,dest,onLand,dur){
+  flying.push({color,sx,sy,ex:dest.x,ey:dest.y,cx:(sx+dest.x)/2,
+    cy:Math.min(sy,dest.y)-board.h*0.2, t:0, dur:dur||0.34, spin:0, onLand});
+}
+function tapScrew(s){
+  if(s.state!=='board'||isHidden(s)) return;
+  const h=findHolder(s.color);
+  if(!h && tray.length>=TRAY_MAX){ shakeT=.2; beep(140,.12,'square',.07); toast('자리가 없어요!'); return; }
+  s.state='out';
+  drill={x:s.x,y:s.y,t:0};
+  beep(320,.22,'sawtooth',.08,900);
+  if(navigator.vibrate) navigator.vibrate(12);
+  const alive=parts.filter(p=>!p.falling).length;
+  if(h){
+    const i=h.slots.length; h.slots.push(s.color);
+    history.push({screw:s,to:'holder',holder:h,alive});
+    launch(s.color,s.x,s.y,slotPos(h,i),()=>checkHolder(h));
+  }else{
+    const i=tray.length; tray.push(s.color);
+    maxTray=Math.max(maxTray,tray.length);
+    history.push({screw:s,to:'tray',alive});
+    launch(s.color,s.x,s.y,trayPos(i),()=>checkOver());
+  }
+  score+=5; releaseParts();
+}
+function checkHolder(h){
+  if(h.slots.length>=HOLDER_SLOTS && h.slots.every(c=>c===h.color)){
+    const col=COLORS[h.color];
+    for(let i=0;i<HOLDER_SLOTS;i++){const p=slotPos(h,i); burst(p.x,p.y,col.main,14);}
+    h.slots=[]; h.pop=1; h.color=queue.shift()||null; h.slide=1;
+    score+=60; wallet.coins+=15; persist(); syncHud(); beep(660,.18,'square',.1,1180); toast('+60');
+    drainTray();
+  }
+  checkClear();
+}
+function drainTray(){
+  for(let i=tray.length-1;i>=0;i--){
+    const h=findHolder(tray[i]); if(!h) continue;
+    const color=tray.splice(i,1)[0], from=trayPos(i);
+    const idx=h.slots.length; h.slots.push(color);
+    launch(color,from.x,from.y,slotPos(h,idx),()=>checkHolder(h),0.3);
+  }
+}
+function releaseParts(){
+  for(const p of parts){
+    if(p.falling) continue;
+    if(pinsOf(p).length===0){
+      p.falling=true; p.vy=rand(-40,20); p.vx=rand(-70,70); p.va=rand(-2.4,2.4);
+      beep(180,.25,'triangle',.07,90);
+    }
+  }
+}
+function starsFor(mt){ return mt<=1?3:mt<=3?2:1; }
+function checkClear(){
+  if(state!=='play') return;
+  if(screws.some(s=>s.state==='board')||flying.length) return;
+  state='clear';
+  const stars=starsFor(maxTray);
+  const bonus=(TRAY_MAX-maxTray)*40+200;
+  const coins=80+stageNo*10+stars*40;
+  score+=bonus; wallet.coins+=coins;
+  save.stars[stageNo]=Math.max(save.stars[stageNo]||0, stars);
+  save.unlocked=Math.max(save.unlocked, Math.min(stageNo+1, TOTAL_STAGES));
+  save.best=Math.max(save.best||0, score);
+  persist(); syncHud();
+  document.getElementById('clearTitle').textContent = stageNo>=TOTAL_STAGES ? '모든 스테이지 클리어!' : '스테이지 클리어!';
+  document.getElementById('clearStars').innerHTML =
+    [0,1,2].map(i=>'<span class="'+(i<stars?'':'off')+'">★</span>').join('');
+  document.getElementById('clearScore').textContent=score;
+  document.getElementById('clearMsg').innerHTML =
+    tplName+' 완성! 클리어 보너스 +'+bonus+'<br>트레이 최대 사용 '+maxTray+'칸 · 코인 +'+coins+' 🪙';
+  document.getElementById('nextBtn').style.display = stageNo>=TOTAL_STAGES ? 'none' : '';
+  document.getElementById('clearOvl').classList.add('on');
+  beep(760,.3,'square',.12,1400);
+}
+function checkOver(){
+  if(state!=='play') return;
+  if(tray.length<TRAY_MAX) return;
+  if(tray.some(c=>findHolder(c))) return;
+  if(screws.some(s=>s.state==='board' && !isHidden(s) && findHolder(s.color))) return;
+  state='over';
+  document.getElementById('overMsg').innerHTML='Stage '+stageNo+' — 트레이가 막혔어요.';
+  document.getElementById('overOvl').classList.add('on');
+  beep(220,.5,'sawtooth',.1,90);
+}
+function burst(x,y,color,n){
+  for(let i=0;i<n;i++){
+    const a=rand(0,TAU), sp=rand(60,320);
+    particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,r:rand(2,5),color});
+  }
+}
+
+/* ── 그리기 ──────────────────────────────────── */
+function drawBackground(){
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#8b6cf5'); g.addColorStop(.55,'#7355e0'); g.addColorStop(1,'#5c3fc4');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.save(); ctx.globalAlpha=.07; ctx.strokeStyle='#fff'; ctx.lineWidth=1;
+  const step=W*0.09;
+  for(let i=-H;i<W+H;i+=step){
+    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+H,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(i,H); ctx.lineTo(i+H,0); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.save();
+  ctx.fillStyle='rgba(255,255,255,.09)';
+  ctx.beginPath(); ctx.roundRect(board.x-8,board.y-8,board.w+16,board.h+16,22); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
+  // 오브젝트 이름
+  ctx.save();
+  ctx.font='700 '+Math.round(board.w*0.038)+'px "Noto Sans KR",sans-serif';
+  ctx.fillStyle='rgba(255,255,255,.45)'; ctx.textAlign='center';
+  ctx.fillText(tplName, board.x+board.w/2, board.y-16);
+  ctx.restore();
+}
+function partPath(p){
+  const path=new Path2D();
+  if(p.t==='circle') path.ellipse(0,0,p.w/2,p.h/2,0,0,TAU);
+  else if(p.t==='bar') path.roundRect(-p.w/2,-p.h/2,p.w,p.h,Math.min(p.w,p.h)/2);
+  else { path.moveTo(0,-p.h/2); path.lineTo(p.w/2,p.h/2); path.lineTo(-p.w/2,p.h/2); path.closePath(); }
+  return path;
+}
+function drawPart(p){
+  const m=MAT[p.c]||MAT.wood;
+  ctx.save();
+  ctx.globalAlpha=p.alpha;
+  // 풍선 줄
+  if(p.str){
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(p.x,p.y+p.h/2);
+    ctx.quadraticCurveTo(p.x+UNIT*0.03, p.y+p.h/2+UNIT*0.13, board.x+board.w/2, p.y+p.h/2+UNIT*0.26);
+    ctx.stroke(); ctx.restore();
+  }
+  ctx.translate(p.x,p.y); ctx.rotate(p.a);
+  const path=partPath(p);
+  // 꽃 모양: 본체 뒤에 꽃잎
+  if(p.style==='flower'){
+    ctx.fillStyle=m.dark;
+    for(let i=0;i<6;i++){
+      const a=i*TAU/6;
+      ctx.beginPath(); ctx.arc(Math.cos(a)*p.w*0.40, Math.sin(a)*p.h*0.40, p.w*0.27, 0, TAU); ctx.fill();
+    }
+    ctx.fillStyle=m.main;
+    for(let i=0;i<6;i++){
+      const a=i*TAU/6;
+      ctx.beginPath(); ctx.arc(Math.cos(a)*p.w*0.40, Math.sin(a)*p.h*0.40, p.w*0.23, 0, TAU); ctx.fill();
+    }
+  }
+  // 풍선 매듭
+  if(p.style==='balloon'){
+    ctx.fillStyle=m.dark;
+    ctx.beginPath(); ctx.moveTo(-p.w*0.06,p.h*0.47); ctx.lineTo(p.w*0.06,p.h*0.47);
+    ctx.lineTo(0,p.h*0.57); ctx.closePath(); ctx.fill();
+  }
+  // 그림자
+  ctx.save(); ctx.translate(0,7);
+  ctx.fillStyle='rgba(40,15,90,.28)'; ctx.fill(path); ctx.restore();
+  // 본체
+  const g=ctx.createLinearGradient(0,-p.h/2,0,p.h/2);
+  g.addColorStop(0,'rgba(255,255,255,.55)'); g.addColorStop(.30,m.main);
+  g.addColorStop(.75,m.main); g.addColorStop(1,m.dark);
+  ctx.fillStyle=m.main; ctx.fill(path);
+  const pim=SPR.get('parts',p.style);
+  if(pim){
+    ctx.save(); ctx.clip(path); SPR.fit(pim,p.w,p.h); ctx.restore();
+    for(const h of p.holes){
+      ctx.fillStyle='rgba(60,30,10,.40)';
+      ctx.beginPath(); ctx.arc(h.lx,h.ly,SCREW_R*0.56,0,TAU); ctx.fill();
+    }
+    ctx.restore(); return;
+  }
+  ctx.save(); ctx.clip(path);
+  ctx.globalAlpha=p.alpha*0.85; ctx.fillStyle=g; ctx.fillRect(-p.w,-p.h,p.w*2,p.h*2);
+  ctx.globalAlpha=p.alpha;
+  // 스타일별 장식
+  if(p.style==='balloon'){
+    ctx.fillStyle='rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.ellipse(-p.w*0.19,-p.h*0.22,p.w*0.13,p.h*0.09,-0.6,0,TAU); ctx.fill();
+  } else if(p.style==='basket'){
+    ctx.strokeStyle='rgba(140,88,30,.45)'; ctx.lineWidth=Math.max(2,p.h*0.09);
+    for(let i=-1;i<=1;i++){
+      ctx.beginPath(); ctx.moveTo(-p.w/2,p.h*0.28*i); ctx.lineTo(p.w/2,p.h*0.28*i); ctx.stroke();
+    }
+    ctx.lineWidth=Math.max(1.5,p.h*0.06);
+    for(let x=-p.w/2; x<p.w/2; x+=p.h*0.42){
+      ctx.beginPath(); ctx.moveTo(x,-p.h/2); ctx.lineTo(x+p.h*0.2,p.h/2); ctx.stroke();
+    }
+  } else if(p.style==='fur'){
+    ctx.strokeStyle='rgba(255,255,255,.28)'; ctx.lineWidth=2;
+    for(let i=0;i<4;i++){
+      const yy=-p.h*0.3+i*p.h*0.2;
+      ctx.beginPath(); ctx.arc(0,yy,p.w*0.3,0.2,0.9); ctx.stroke();
+    }
+  } else if(p.style==='face'){
+    ctx.fillStyle='#6b4632';
+    ctx.beginPath(); ctx.ellipse(0,-p.h*0.06,p.w*0.15,p.h*0.12,0,0,TAU); ctx.fill();
+    ctx.strokeStyle='#6b4632'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.arc(0,p.h*0.06,p.w*0.20,0.25*Math.PI,0.75*Math.PI); ctx.stroke();
+  } else if(p.style==='core'){
+    ctx.fillStyle='rgba(190,120,20,.35)';
+    for(let i=0;i<7;i++){
+      const a=i*TAU/7, r=p.w*0.26;
+      ctx.beginPath(); ctx.arc(Math.cos(a)*r,Math.sin(a)*r,p.w*0.05,0,TAU); ctx.fill();
+    }
+  } else if(p.style==='flower'){
+    ctx.fillStyle='rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.arc(0,0,p.w*0.22,0,TAU); ctx.fill();
+  } else if(p.style==='petal'){
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.beginPath(); ctx.ellipse(0,-p.h*0.12,p.w*0.24,p.h*0.16,0,0,TAU); ctx.fill();
+  } else if(p.style==='leaf'){
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(-p.w*0.35,0); ctx.lineTo(p.w*0.35,0); ctx.stroke();
+  } else if(p.style==='cone'){
+    ctx.strokeStyle='rgba(150,95,35,.5)'; ctx.lineWidth=2;
+    for(let i=-4;i<=4;i++){
+      ctx.beginPath(); ctx.moveTo(-p.w/2+i*p.w*0.14,-p.h/2); ctx.lineTo(p.w/2+i*p.w*0.14,p.h/2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(p.w/2+i*p.w*0.14,-p.h/2); ctx.lineTo(-p.w/2+i*p.w*0.14,p.h/2); ctx.stroke();
+    }
+  } else if(p.style==='scoop'){
+    ctx.fillStyle='rgba(255,255,255,.30)';
+    for(let i=0;i<6;i++){
+      const a=Math.PI+i*Math.PI/5;
+      ctx.beginPath(); ctx.arc(Math.cos(a)*p.w*0.36,Math.sin(a)*p.h*0.36,p.w*0.11,0,TAU); ctx.fill();
+    }
+  } else if(p.style==='window'){
+    ctx.fillStyle='rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.ellipse(-p.w*0.14,-p.h*0.16,p.w*0.14,p.h*0.09,-0.6,0,TAU); ctx.fill();
+  } else if(p.style==='wheel'){
+    ctx.fillStyle='rgba(255,255,255,.65)';
+    ctx.beginPath(); ctx.arc(0,0,p.w*0.22,0,TAU); ctx.fill();
+  } else if(p.style==='plank'){
+    ctx.strokeStyle='rgba(255,255,255,.30)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(-p.w*0.4,-p.h*0.22); ctx.lineTo(p.w*0.4,-p.h*0.22); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.lineWidth=2.5; ctx.strokeStyle=m.dark; ctx.stroke(path);
+  // 구멍
+  for(const h of p.holes){
+    ctx.fillStyle='rgba(60,30,10,.40)';
+    ctx.beginPath(); ctx.arc(h.lx,h.ly,SCREW_R*0.56,0,TAU); ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,.22)';
+    ctx.beginPath(); ctx.arc(h.lx,h.ly-1,SCREW_R*0.42,0,TAU); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawScrew(x,y,color,r,spin,dim){
+  const c=COLORS[color];
+  ctx.save(); ctx.translate(x,y); ctx.rotate(spin||0);
+  if(dim) ctx.globalAlpha=.38;
+  ctx.fillStyle='rgba(30,10,60,.35)';
+  ctx.beginPath(); ctx.arc(0,r*0.22,r,0,TAU); ctx.fill();
+  const spim=SPR.get('screws',color);
+  if(spim){ SPR.draw(spim,0,0,r*2.1); ctx.restore(); return; }
+  const g=ctx.createRadialGradient(-r*0.35,-r*0.4,r*0.15,0,0,r*1.08);
+  g.addColorStop(0,c.light); g.addColorStop(.55,c.main); g.addColorStop(1,c.dark);
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,r,0,TAU); ctx.fill();
+  ctx.strokeStyle=c.dark; ctx.lineWidth=r*0.16;
+  ctx.beginPath(); ctx.arc(0,0,r*0.93,0,TAU); ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.92)';
+  const bw=r*0.24, bl=r*1.22;
+  ctx.beginPath(); ctx.roundRect(-bl/2,-bw/2,bl,bw,bw/2); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(-bw/2,-bl/2,bw,bl,bw/2); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.18)';
+  ctx.beginPath(); ctx.roundRect(-bl/2,-bw/2+bw*0.45,bl,bw*0.4,bw/4); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.5)';
+  ctx.beginPath(); ctx.ellipse(-r*0.38,-r*0.45,r*0.26,r*0.16,-0.6,0,TAU); ctx.fill();
+  ctx.restore();
+}
+function drawHolder(h){
+  const c=h.color?COLORS[h.color]:null;
+  const pop=1+Math.sin(h.pop*Math.PI)*0.12;
+  ctx.save();
+  ctx.translate(h.x+h.slide*board.w*0.5, h.y);
+  ctx.globalAlpha=1-h.slide*0.6; ctx.scale(pop,pop);
+  const w=h.w, hh=h.h, r=hh*0.30;
+  if(!c){
+    ctx.fillStyle='rgba(255,255,255,.10)';
+    ctx.beginPath(); ctx.roundRect(-w/2,-hh/2,w,hh,r); ctx.fill();
+    ctx.restore(); return;
+  }
+  ctx.fillStyle=c.main;
+  for(const sx of [-1,1]){ ctx.beginPath(); ctx.arc(sx*w*0.30,-hh*0.46,hh*0.19,0,TAU); ctx.fill(); }
+  ctx.fillStyle='rgba(30,10,60,.30)';
+  ctx.beginPath(); ctx.roundRect(-w/2,-hh/2+6,w,hh,r); ctx.fill();
+  ctx.fillStyle=c.main; ctx.beginPath(); ctx.roundRect(-w/2,-hh/2,w,hh,r); ctx.fill();
+  ctx.fillStyle=c.dark; ctx.globalAlpha=.35;
+  ctx.beginPath(); ctx.roundRect(-w/2,hh*0.22,w,hh*0.28,r*0.6); ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#fdfbff';
+  ctx.beginPath(); ctx.roundRect(-w*0.42,-hh*0.30,w*0.84,hh*0.62,r*0.7); ctx.fill();
+  const sr=SCREW_R*0.86;
+  for(let i=0;i<HOLDER_SLOTS;i++){
+    const px=(i-1)*w*0.26, py=hh*0.06;
+    if(h.slots[i]) drawScrew(px,py,h.slots[i],sr,0);
+    else{
+      ctx.fillStyle='rgba(90,70,130,.20)'; ctx.beginPath(); ctx.arc(px,py,sr*0.82,0,TAU); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(px,py-1,sr*0.62,0,TAU); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+function drawTray(){
+  const g=trayBox.w*0.012, sw=(trayBox.w-g*(TRAY_MAX-1))/TRAY_MAX;
+  const danger=tray.length>=TRAY_MAX-1;
+  ctx.save();
+  ctx.fillStyle=danger?'rgba(255,90,90,.20)':'rgba(255,255,255,.10)';
+  ctx.beginPath(); ctx.roundRect(board.x-6,trayBox.y-6,trayBox.w+12,trayBox.h+12,16); ctx.fill();
+  ctx.strokeStyle=danger?'rgba(255,120,120,.75)':'rgba(255,255,255,.22)';
+  ctx.lineWidth=2; ctx.stroke();
+  for(let i=0;i<TRAY_MAX;i++){
+    const p=trayPos(i);
+    ctx.fillStyle='rgba(60,35,110,.35)';
+    ctx.beginPath(); ctx.roundRect(p.x-sw/2,trayBox.y,sw,trayBox.h,12); ctx.fill();
+    if(tray[i]) drawScrew(p.x,p.y,tray[i],SCREW_R*0.82,0);
+  }
+  ctx.restore();
+}
+function drawQueue(){
+  const n=Math.min(queue.length,6);
+  if(!n) return;
+  const size=board.w*0.045, gap=size*0.5, total=n*size+(n-1)*gap;
+  let x=board.x+board.w/2-total/2+size/2;
+  const y=holderBox.y-board.w*0.058;
+  ctx.save();
+  ctx.font='700 '+Math.round(board.w*0.033)+'px "Noto Sans KR",sans-serif';
+  ctx.fillStyle='rgba(255,255,255,.75)'; ctx.textAlign='right'; ctx.textBaseline='middle';
+  ctx.fillText('NEXT', board.x+board.w/2-total/2-size*0.5, y);
+  for(let i=0;i<n;i++){
+    const c=COLORS[queue[i]];
+    ctx.globalAlpha=1-i*0.11; ctx.fillStyle=c.main;
+    ctx.beginPath(); ctx.arc(x,y,size/2,0,TAU); ctx.fill();
+    ctx.strokeStyle=c.dark; ctx.lineWidth=2; ctx.stroke();
+    x+=size+gap;
+  }
+  ctx.restore();
+}
+function drawDrill(){
+  if(!drill) return;
+  const t=drill.t;
+  ctx.save();
+  ctx.globalAlpha=clamp(1-t*2.2,0,1);
+  ctx.translate(drill.x+SCREW_R*1.4, drill.y-SCREW_R*1.4);
+  ctx.rotate(0.5+Math.sin(t*60)*0.05);
+  ctx.fillStyle='#ffc21f'; ctx.beginPath(); ctx.roundRect(0,-14,44,28,10); ctx.fill();
+  ctx.fillStyle='#5b3fbd'; ctx.beginPath(); ctx.roundRect(34,-15,14,30,7); ctx.fill();
+  ctx.fillStyle='#ffc21f'; ctx.beginPath(); ctx.roundRect(8,10,16,26,7); ctx.fill();
+  ctx.fillStyle='#b9b9c6'; ctx.beginPath(); ctx.roundRect(-16,-4,20,8,4); ctx.fill();
+  ctx.restore();
+}
+
+/* ── 입력 ────────────────────────────────────── */
+cv.addEventListener('pointerdown', e=>{
+  if(state!=='play') return;
+  const r=cv.getBoundingClientRect(), px=e.clientX-r.left, py=e.clientY-r.top;
+  let best=null, bd=SCREW_R*1.6;
+  for(const s of screws){
+    if(s.state!=='board') continue;
+    const d=Math.hypot(s.x-px,s.y-py);
+    if(d<bd){bd=d; best=s;}
+  }
+  if(!best) return;
+  if(isHidden(best)){
+    best.wob=1; shakeT=.18; beep(140,.12,'square',.07); toast('🔒 위 조각부터!');
+    return;
+  }
+  tapScrew(best);
+});
+
+/* ── 루프 ────────────────────────────────────── */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min((now-last)/1000,1/30); last=now;
+
+  for(const p of parts){
+    if(p.falling){
+      p.vy+=2100*dt; p.y+=p.vy*dt; p.x+=p.vx*dt; p.a+=p.va*dt;
+      if(p.y>board.y+board.h+board.h*0.4) p.alpha=0;
+    } else if(state==='play'){
+      const pins=pinsOf(p);
+      if(pins.length===1){
+        const pv=pins[0];
+        const cur=Math.atan2(p.y-pv.y,p.x-pv.x);
+        const d=norm(Math.PI/2-cur);
+        p.swing+=(d*26-p.swing*5.5)*dt;
+        const da=p.swing*dt, c=Math.cos(da), s=Math.sin(da);
+        const dx=p.x-pv.x, dy=p.y-pv.y;
+        p.x=pv.x+dx*c-dy*s; p.y=pv.y+dx*s+dy*c; p.a+=da;
+      }
+    }
+  }
+  parts=parts.filter(p=>p.alpha>0);
+  for(const s of screws) if(s.wob>0) s.wob=Math.max(0,s.wob-dt*4);
+  if(shakeT>0) shakeT=Math.max(0,shakeT-dt);
+  if(drill){ drill.t+=dt; if(drill.t>0.5) drill=null; }
+  for(const h of holders){
+    if(h.pop>0) h.pop=Math.max(0,h.pop-dt*3);
+    if(h.slide>0) h.slide=Math.max(0,h.slide-dt*3.4);
+  }
+  for(let i=flying.length-1;i>=0;i--){
+    const f=flying[i]; f.t+=dt; f.spin+=dt*26;
+    if(f.t>=f.dur){
+      flying.splice(i,1);
+      if(f.onLand) f.onLand();
+      beep(520,.07,'triangle',.07);
+      if(!flying.length) checkClear();
+    }
+  }
+  for(const p of particles){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=900*dt; p.life-=dt*1.7; }
+  particles=particles.filter(p=>p.life>0);
+
+  ctx.clearRect(0,0,W,H);
+  drawBackground();
+
+  ctx.save();
+  ctx.beginPath(); ctx.roundRect(board.x-8,board.y-8,board.w+16,board.h+16,22); ctx.clip();
+  if(shakeT>0) ctx.translate(Math.sin(shakeT*90)*5,0);
+  const order=parts.slice().sort((a,b)=>a.z-b.z);
+  for(const p of order){
+    drawPart(p);
+    for(const s of screws){
+      if(s.state!=='board'||s.z!==p.z||isHidden(s)) continue;
+      drawScrew(s.x,s.y,s.color,SCREW_R, s.wob?Math.sin(s.wob*30)*0.25:0);
+    }
+  }
+  for(const s of screws){
+    if(s.state!=='board'||!isHidden(s)) continue;
+    ctx.save(); ctx.globalAlpha=.30;
+    drawScrew(s.x,s.y,s.color,SCREW_R*0.75,0,true); ctx.restore();
+  }
+  ctx.restore();
+
+  drawQueue();
+  for(const h of holders) drawHolder(h);
+  drawTray();
+  for(const f of flying){
+    const t=f.t/f.dur, mt=1-t;
+    const x=mt*mt*f.sx+2*mt*t*f.cx+t*t*f.ex;
+    const y=mt*mt*f.sy+2*mt*t*f.cy+t*t*f.ey;
+    drawScrew(x,y,f.color,SCREW_R*(1-t*0.15),f.spin);
+  }
+  for(const p of particles){
+    ctx.globalAlpha=clamp(p.life,0,1); ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,TAU); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  drawDrill();
+  requestAnimationFrame(frame);
+}
+
+/* ── 부스터 ──────────────────────────────────── */
+const show=id=>document.getElementById(id).classList.add('on');
+const hide=id=>document.getElementById(id).classList.remove('on');
+
+document.getElementById('bstHolder').onclick=()=>{
+  if(state!=='play') return;
+  if(!(items.holder>0)){ openShop(); return; }
+  if(holders.length>=4){ toast('이미 최대예요'); return; }
+  holders.push({color:queue.shift()||null, slots:[], pop:1, slide:1});
+  holderN=holders.length; layoutHolders();
+  items.holder--; persist(); syncHud(); drainTray();
+  beep(720,.18,'square',.1,1100); toast('➕ 홀더 추가!');
+};
+document.getElementById('bstUndo').onclick=()=>{
+  if(state!=='play') return;
+  if(!(items.undo>0)){ openShop(); return; }
+  const last=history[history.length-1];
+  if(!last){ toast('되돌릴 게 없어요'); return; }
+  if(last.alive!==parts.filter(p=>!p.falling).length){ toast('조각이 이미 떨어졌어요'); return; }
+  history.pop();
+  if(last.to==='holder'){
+    const i=last.holder.slots.lastIndexOf(last.screw.color);
+    if(i>=0) last.holder.slots.splice(i,1);
+  } else {
+    const i=tray.lastIndexOf(last.screw.color);
+    if(i>=0) tray.splice(i,1);
+  }
+  last.screw.state='board';
+  items.undo--; persist(); syncHud();
+  beep(400,.16,'triangle',.1,700); toast('↩️ 되돌렸어요');
+};
+document.getElementById('bstColor').onclick=()=>{
+  if(state!=='play') return;
+  if(!(items.recolor>0)){ openShop(); return; }
+  const target=holders.find(h=>h.slots.length===0);
+  if(!target){ toast('빈 홀더가 없어요'); return; }
+  // 트레이에 가장 많은 색, 없으면 남은 나사 중 가장 많은 색
+  const count={};
+  for(const c of tray) count[c]=(count[c]||0)+1;
+  if(!tray.length) for(const s2 of screws) if(s2.state==='board') count[s2.color]=(count[s2.color]||0)+1;
+  let best=null;
+  for(const c in count) if(!best||count[c]>count[best]) best=c;
+  if(!best){ toast('바꿀 색이 없어요'); return; }
+  if(target.color) queue.push(target.color);
+  target.color=best; target.pop=1;
+  items.recolor--; persist(); syncHud(); drainTray();
+  beep(820,.2,'square',.1,1200); toast('🎨 '+'홀더 색 변경!');
+};
+
+/* ── 상점 ────────────────────────────────────── */
+const SHOP=[
+  {key:'holder', emo:'➕', name:'홀더 추가', price:120, desc:'이번 스테이지에 홀더를 하나 더 놓습니다. (최대 4개)'},
+  {key:'undo',   emo:'↩️', name:'되돌리기', price:60,  desc:'마지막에 뺀 나사를 제자리로 돌려놓습니다.'},
+  {key:'recolor',emo:'🎨', name:'색 변경', price:90,  desc:'빈 홀더의 색을 지금 가장 필요한 색으로 바꿉니다.'}
+];
+function renderShop(){
+  document.getElementById('shopCoins').textContent=wallet.coins;
+  const list=document.getElementById('shopList'); list.innerHTML='';
+  for(const it of SHOP){
+    const row=document.createElement('div'); row.className='item';
+    row.innerHTML='<div class="emo">'+it.emo+'</div>'+
+      '<div class="txt"><b>'+it.name+'</b><small>'+it.desc+'</small></div>'+
+      '<div class="have">×'+(items[it.key]||0)+'</div>';
+    const btn=document.createElement('button');
+    btn.className='buy'; btn.textContent=it.price+' 🪙';
+    btn.disabled=wallet.coins<it.price;
+    btn.onclick=()=>{
+      if(wallet.coins<it.price) return;
+      wallet.coins-=it.price; items[it.key]=(items[it.key]||0)+1;
+      persist(); syncHud(); renderShop(); beep(880,.1,'square',.1);
+    };
+    row.appendChild(btn); list.appendChild(row);
+  }
+}
+function openShop(){ renderShop(); show('shopOvl'); }
+document.getElementById('bstShop').onclick=openShop;
+document.getElementById('mapShopBtn').onclick=openShop;
+document.getElementById('shopCloseBtn').onclick=()=>hide('shopOvl');
+
+/* ── 스테이지 맵 ─────────────────────────────── */
+const mapPath=document.getElementById('mapPath');
+function buildMap(){
+  mapPath.innerHTML='';
+  const rowH=104, pad=40;
+  mapPath.style.height=(TOTAL_STAGES*rowH+pad*2)+'px';
+  const cfgName=n=>TEMPLATES[(n-1)%TEMPLATES.length].name;
+  for(let n=TOTAL_STAGES;n>=1;n--){
+    const idx=TOTAL_STAGES-n;
+    const y=pad+idx*rowH;
+    const cx=50+Math.sin(idx*0.85)*26;              // %
+    // 연결 점선
+    if(idx<TOTAL_STAGES-1){
+      const ny=y+rowH, ncx=50+Math.sin((idx+1)*0.85)*26;
+      for(let k=1;k<=3;k++){
+        const d=document.createElement('div');
+        d.className='dot';
+        d.style.top=(y+31+(ny-y)*k/4)+'px';
+        d.style.left='calc('+(cx+(ncx-cx)*k/4)+'% - 4px)';
+        mapPath.appendChild(d);
+      }
+    }
+    const st=save.stars[n]||0;
+    const unlocked=n<=save.unlocked;
+    const b=document.createElement('button');
+    b.className='node'+(unlocked?(st?' done':''):' locked')+(n===save.unlocked?' cur':'');
+    b.style.top=y+'px'; b.style.left='calc('+cx+'% - 31px)';
+    b.innerHTML=(unlocked?n+'<span class="em">'+TEMPLATES[(n-1)%TEMPLATES.length].emoji+'</span>':'🔒')+
+      (unlocked?'<span class="st">'+[0,1,2].map(i=>'<span class="'+(i<st?'':'off')+'">★</span>').join('')+'</span>':'');
+    b.title='Stage '+n+' · '+cfgName(n);
+    if(unlocked) b.onclick=()=>startStage(n);
+    mapPath.appendChild(b);
+  }
+  document.getElementById('mapStars').textContent=totalStars();
+  document.getElementById('mapCoins').textContent=wallet.coins;
+  // 현재 스테이지가 보이도록 스크롤
+  requestAnimationFrame(()=>{
+    const sc=document.getElementById('mapScroll');
+    const idx=TOTAL_STAGES-save.unlocked;
+    sc.scrollTop=Math.max(0, pad+idx*rowH - sc.clientHeight*0.55);
+  });
+}
+function openMap(){
+  state='menu';
+  hide('clearOvl'); hide('overOvl'); hide('helpOvl'); hide('shopOvl');
+  buildMap(); show('mapOvl');
+}
+function startStage(n){
+  hide('mapOvl'); hide('clearOvl'); hide('overOvl');
+  score=0;
+  buildStage(n);
+  if(!save.seenHelp){ save.seenHelp=true; persist(); show('helpOvl'); }
+}
+document.getElementById('helpBtn').onclick=()=>hide('helpOvl');
+document.getElementById('mapBtn').onclick=openMap;
+document.getElementById('clearMapBtn').onclick=openMap;
+document.getElementById('overMapBtn').onclick=openMap;
+document.getElementById('nextBtn').onclick=()=>startStage(Math.min(stageNo+1,TOTAL_STAGES));
+document.getElementById('retryBtn').onclick=()=>startStage(stageNo);
+document.getElementById('resetBtn').onclick=()=>{ if(state==='play') startStage(stageNo); };
+
+layout(); buildStage(save.unlocked); state='menu'; buildMap();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
