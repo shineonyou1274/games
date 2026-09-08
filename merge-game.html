@@ -200,26 +200,31 @@ const pick=a=>a[(Math.random()*a.length)|0];
 
 /* ── 스프라이트 로더 (없으면 벡터로 폴백) ── */
 const SPR=(()=>{
+  let api;
   const cfg=window.GAME_SPRITES||{}, base=cfg.base||'assets/', cache={};
   function img(path){
     if(!path) return null;
     if(path in cache) return cache[path];
     const im=new Image();
-    im.onload=()=>{im._ok=true;};
+    im.onload=()=>{ im._ok=true; api._fire(); };
     im.onerror=()=>{cache[path]=null;};
     im.src=base+path; cache[path]=im; return im;
   }
-  return {
+  const ready=[];
+  const out={
+    onReady(cb){ ready.push(cb); },
     get(group,key){
       const g=(window.GAME_SPRITES||{})[group];
       const im=img(g&&g[key]);
       return im&&im._ok?im:null;
     },
+    _fire(){ for(const cb of ready) cb(); },
     draw(im,x,y,h){
       const w=h*(im.naturalWidth/im.naturalHeight);
       ctx.drawImage(im,x-w/2,y-h/2,w,h);
     }
   };
+  api=out; return out;
 })();
 
 /* ── 저장 (지갑·아이템은 두 게임 공용) ── */
@@ -661,11 +666,15 @@ document.getElementById('shopCloseBtn').onclick=()=>hide('shopOvl');
 const dcache={};
 function buildDrinkCache(){
   const real=ctx;
-  for(let lv=0;lv<DRINKS.length-1;lv++){        // 마지막 단계는 반짝임 때문에 실시간 렌더
+  for(let lv=0;lv<DRINKS.length;lv++){
+    const im=SPR.get('drinks',lv);
+    if(lv===DRINKS.length-1 && !im) continue;   // 스프라이트가 없으면 반짝임 때문에 실시간 렌더
     const base=radiusOf(lv), pad=base*1.45, size=Math.max(8,Math.ceil(pad*2*DPR));
     const off=document.createElement('canvas'); off.width=off.height=size;
     const g=off.getContext('2d'); g.setTransform(DPR,0,0,DPR,0,0);
-    ctx=g; drawDrink(pad,pad,base,lv,1,true); ctx=real;
+    ctx=g;
+    if(im) SPR.draw(im,pad,pad,base*2.2); else drawDrink(pad,pad,base,lv,1,true);
+    ctx=real;
     dcache[lv]={c:off,half:pad,base};
   }
 }
@@ -676,14 +685,14 @@ function drawDrink(x,y,r,level,alpha,raw){
   if(!raw){
     ctx.fillStyle='rgba(96,62,28,.20)';
     ctx.beginPath(); ctx.ellipse(x+r*0.10,y+r*0.62,r*0.82,r*0.28,0,0,TAU); ctx.fill();
-    const im=SPR.get('drinks',level);
-    if(im){ SPR.draw(im,x,y,r*2.1); ctx.restore(); return; }
-    const cc=dcache[level];
-    if(cc){                                     // 캐시된 그림을 크기만 맞춰 그린다
+    const cc=dcache[level];                     // 캐시에 스프라이트/벡터가 구워져 있다
+    if(cc){
       const half=cc.half*(r/cc.base);
       ctx.drawImage(cc.c,x-half,y-half,half*2,half*2);
       ctx.restore(); return;
     }
+    const im=SPR.get('drinks',level);
+    if(im){ SPR.draw(im,x,y,r*2.2); ctx.restore(); return; }
   }
   ctx.translate(x,y); ctx.scale(r/50,r/50);
   const cup=new Path2D();
@@ -1062,6 +1071,7 @@ if(location.search.includes('debug')) window.__dbg={
   get shotsLeft(){return shotsLeft}, get wallet(){return wallet}, get items(){return items},
   get save(){return save}, get launchY(){return launchY}, startStage, serve
 };
+SPR.onReady(()=>buildDrinkCache());
 layout(); buildStage(save.unlocked); state='menu'; buildMap();
 requestAnimationFrame(frame);
 })();

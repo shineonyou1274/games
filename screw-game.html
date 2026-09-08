@@ -307,15 +307,19 @@ const TEMPLATES = [
 
 /* ── 스프라이트 로더 (없으면 벡터로 폴백) ── */
 const SPR=(()=>{
+  let api;
   const cfg=window.GAME_SPRITES||{}, base=cfg.base||'assets/', cache={};
   function img(path){
     if(!path) return null;
     if(path in cache) return cache[path];
     const im=new Image();
-    im.onload=()=>{im._ok=true;}; im.onerror=()=>{cache[path]=null;};
+    im.onload=()=>{ im._ok=true; api._fire(); }; im.onerror=()=>{cache[path]=null;};
     im.src=base+path; cache[path]=im; return im;
   }
-  return {
+  const ready=[];
+  const out={
+    onReady(cb){ ready.push(cb); },
+    _fire(){ for(const cb of ready) cb(); },
     get(group,key){
       const g=(window.GAME_SPRITES||{})[group];
       const im=img(g&&g[key]);
@@ -324,6 +328,7 @@ const SPR=(()=>{
     draw(im,x,y,h){ const w=h*(im.naturalWidth/im.naturalHeight); ctx.drawImage(im,x-w/2,y-h/2,w,h); },
     fit(im,w,h){ ctx.drawImage(im,-w/2,-h/2,w,h); }
   };
+  api=out; return out;
 })();
 
 /* ── 진행 저장 ───────────────────────────────── */
@@ -875,7 +880,10 @@ function buildScrewCache(){
     const base=SCREW_R, pad=base*1.4, size=Math.max(8,Math.ceil(pad*2*DPR));
     const off=document.createElement('canvas'); off.width=off.height=size;
     const g=off.getContext('2d'); g.setTransform(DPR,0,0,DPR,0,0);
-    ctx=g; drawScrew(pad,pad,key,base,0,false,true); ctx=real;
+    ctx=g;
+    const im=SPR.get('screws',key);
+    if(im) SPR.draw(im,pad,pad,base*2.1); else drawScrew(pad,pad,key,base,0,false,true);
+    ctx=real;
     scache[key]={c:off,half:pad,base};
   }
 }
@@ -886,10 +894,10 @@ function drawScrew(x,y,color,r,spin,dim,raw){
   if(!raw){
     ctx.fillStyle='rgba(30,10,60,.35)';
     ctx.beginPath(); ctx.arc(0,r*0.22,r,0,TAU); ctx.fill();
+    const cc=scache[color];                    // 캐시에 스프라이트/벡터가 구워져 있다
+    if(cc){ const half=cc.half*(r/cc.base); ctx.drawImage(cc.c,-half,-half,half*2,half*2); ctx.restore(); return; }
     const spim=SPR.get('screws',color);
     if(spim){ SPR.draw(spim,0,0,r*2.1); ctx.restore(); return; }
-    const cc=scache[color];
-    if(cc){ const half=cc.half*(r/cc.base); ctx.drawImage(cc.c,-half,-half,half*2,half*2); ctx.restore(); return; }
   }
   const g=ctx.createRadialGradient(-r*0.35,-r*0.4,r*0.15,0,0,r*1.08);
   g.addColorStop(0,c.light); g.addColorStop(.55,c.main); g.addColorStop(1,c.dark);
@@ -1280,6 +1288,7 @@ if(location.search.includes('debug')) window.__dbg={
   get maxTray(){return maxTray}, get queue(){return queue},
   isHidden, startStage
 };
+SPR.onReady(()=>buildScrewCache());
 layout(); buildStage(save.unlocked); state='menu'; buildMap();
 requestAnimationFrame(frame);
 })();

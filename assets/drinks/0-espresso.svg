@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<defs>
+<linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset=".45" stop-color="#ffffff" stop-opacity=".12"/><stop offset="1" stop-color="#cfe8f5" stop-opacity=".40"/></linearGradient>
+<linearGradient id="lq" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a4420"/><stop offset="1" stop-color="#35180a"/></linearGradient>
+</defs>
+<clipPath id="cup"><path d="M92,120 h72 a8,8 0 0 1 8,8 l-8,52 a16,16 0 0 1 -16,14 h-40 a16,16 0 0 1 -16,-14 l-8,-52 a8,8 0 0 1 8,-8 z"/></clipPath>
+<path d="M92,120 h72 a8,8 0 0 1 8,8 l-8,52 a16,16 0 0 1 -16,14 h-40 a16,16 0 0 1 -16,-14 l-8,-52 a8,8 0 0 1 8,-8 z" fill="url(#gl)"/>
+<g clip-path="url(#cup)"><rect x="80" y="132" width="96" height="70" fill="url(#lq)"/><ellipse cx="128" cy="133" rx="45" ry="8" fill="#c58a52" fill-opacity=".85"/><rect x="96" y="140" width="9" height="44" rx="4.5" fill="#ffffff" fill-opacity="0.35" transform="rotate(6 100.5 162.0)"/></g>
+<path d="M92,120 h72 a8,8 0 0 1 8,8 l-8,52 a16,16 0 0 1 -16,14 h-40 a16,16 0 0 1 -16,-14 l-8,-52 a8,8 0 0 1 8,-8 z" fill="none" stroke="#6b4a33" stroke-opacity=".22" stroke-width="4"/>
+<ellipse cx="128" cy="120" rx="42" ry="8" fill="none" stroke="#f0e2d2" stroke-width="7" stroke-opacity=".9"/>
+<path d="M170,132 q26,10 20,30 q-4,16 -20,18" fill="none" stroke="#e9dfd2" stroke-width="9" stroke-linecap="round"/>
+</svg>

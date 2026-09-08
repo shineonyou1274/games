@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<defs>
+<linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset=".45" stop-color="#ffffff" stop-opacity=".12"/><stop offset="1" stop-color="#cfe8f5" stop-opacity=".40"/></linearGradient>
+<linearGradient id="lq" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9ad4"/><stop offset="1" stop-color="#d63682"/></linearGradient>
+</defs>
+<clipPath id="cup"><path d="M80,86 h96 a10,10 0 0 1 10,12 l-14,110 a18,18 0 0 1 -18,16 h-52 a18,18 0 0 1 -18,-16 l-14,-110 a10,10 0 0 1 10,-12 z"/></clipPath>
+<path d="M80,86 h96 a10,10 0 0 1 10,12 l-14,110 a18,18 0 0 1 -18,16 h-52 a18,18 0 0 1 -18,-16 l-14,-110 a10,10 0 0 1 10,-12 z" fill="url(#gl)"/>
+<g clip-path="url(#cup)"><rect x="66" y="104" width="124" height="124" fill="url(#lq)"/><ellipse cx="128" cy="105" rx="54" ry="10" fill="#ffffff" fill-opacity=".45"/><circle cx="150" cy="150" r="5" fill="#ffffff" fill-opacity=".45"/><circle cx="102" cy="176" r="4" fill="#ffffff" fill-opacity=".45"/><circle cx="136" cy="196" r="4" fill="#ffffff" fill-opacity=".45"/><rect x="88" y="116" width="11" height="86" rx="5.5" fill="#ffffff" fill-opacity="0.32" transform="rotate(3 93.5 159.0)"/></g>
+<path d="M80,86 h96 a10,10 0 0 1 10,12 l-14,110 a18,18 0 0 1 -18,16 h-52 a18,18 0 0 1 -18,-16 l-14,-110 a10,10 0 0 1 10,-12 z" fill="none" stroke="#6b4a33" stroke-opacity=".22" stroke-width="4"/>
+<ellipse cx="128" cy="86" rx="50" ry="10" fill="none" stroke="#ffd9ec" stroke-width="7" stroke-opacity=".9"/>
+<line x1="152" y1="44" x2="172" y2="140" stroke="#59b6ff" stroke-width="17" stroke-linecap="round"/><line x1="152" y1="44" x2="172" y2="140" stroke="#ffffff" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"/><circle cx="96" cy="74" r="17" fill="#e2385c"/><circle cx="91" cy="68" r="4.8" fill="#ffffff" fill-opacity=".5"/><circle cx="124" cy="64" r="15" fill="#c62a4c"/><circle cx="120" cy="59" r="4.2" fill="#ffffff" fill-opacity=".5"/><circle cx="148" cy="76" r="13" fill="#f0577a"/><circle cx="144" cy="71" r="3.6" fill="#ffffff" fill-opacity=".5"/><g transform="rotate(-30 76 86)"><ellipse cx="76" cy="86" rx="18" ry="10" fill="#7cc85f"/><line x1="58" y1="86" x2="94" y2="86" stroke="#2e8f2c" stroke-width="2.5"/></g>
+</svg>

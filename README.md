@@ -41,4 +41,6 @@
 
 ## 그림 교체
 
-모든 그림은 코드로 그린 벡터라 파일이 없어도 동작합니다. PNG/SVG로 바꾸려면 `assets/sprites.js`에 경로만 채우면 되고, 파일이 없는 항목은 자동으로 벡터로 되돌아갑니다. 규격은 [`assets/README.md`](assets/README.md) 참고.
+음료 9종과 나사 8색은 `assets/` 안의 **SVG 파일**을 씁니다. 손님 얼굴과 나사 게임 조각은 코드로 그린 벡터입니다.
+어느 쪽이든 `assets/sprites.js`에 경로만 채우면 그림이 교체되고, 파일이 없는 항목은 자동으로 벡터로 되돌아갑니다.
+규격과 목록은 [`assets/README.md`](assets/README.md) 참고.

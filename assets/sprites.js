@@ -13,15 +13,15 @@ window.GAME_SPRITES = {
 
   /* 머지 게임 — 음료 9단계 (정사각 PNG, 잔 바닥이 아래쪽에 오도록) */
   drinks: {
-    0: '',   // 에스프레소
-    1: '',   // 아이스티
-    2: '',   // 레모네이드
-    3: '',   // 모히토
-    4: '',   // 오렌지에이드
-    5: '',   // 베리 스무디
-    6: '',   // 블루 라군
-    7: '',   // 트로피컬
-    8: ''    // 전설의 칵테일
+    0: 'drinks/0-espresso.svg',   // 에스프레소
+    1: 'drinks/1-icedtea.svg',   // 아이스티
+    2: 'drinks/2-lemonade.svg',   // 레모네이드
+    3: 'drinks/3-mojito.svg',   // 모히토
+    4: 'drinks/4-orangeade.svg',   // 오렌지에이드
+    5: 'drinks/5-berry.svg',   // 베리 스무디
+    6: 'drinks/6-lagoon.svg',   // 블루 라군
+    7: 'drinks/7-tropical.svg',   // 트로피컬
+    8: 'drinks/8-legend.svg'    // 전설의 칵테일
   },
 
   /* 머지 게임 — 손님 얼굴 (정사각, 배경 투명) */
@@ -29,8 +29,10 @@ window.GAME_SPRITES = {
 
   /* 나사 게임 — 나사 머리 (정사각) */
   screws: {
-    red:'', blue:'', green:'', yellow:'',
-    purple:'', orange:'', pink:'', cyan:''
+    red:'screws/red.svg',       blue:'screws/blue.svg',
+    green:'screws/green.svg',   yellow:'screws/yellow.svg',
+    purple:'screws/purple.svg', orange:'screws/orange.svg',
+    pink:'screws/pink.svg',     cyan:'screws/cyan.svg'
   },
 
   /* 나사 게임 — 조각. 키는 스타일 이름, 이미지는 조각의 가로×세로에 맞춰 늘어납니다 */
