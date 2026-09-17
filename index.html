@@ -40,6 +40,7 @@
   .thumb.merge{background:linear-gradient(160deg,#7ee0ff,#f6cf8a)}
   .thumb.screw{background:linear-gradient(160deg,#ffd45e,#f0862b)}
   .thumb.prime{background:linear-gradient(160deg,#4df3ff,#9a6bff)}
+  .thumb.recycle{background:linear-gradient(160deg,#a8e39a,#f0b03f)}
   .card .body{flex:1;min-width:0}
   .card h2{font-size:24px;line-height:1.15}
   .card .desc{font-family:'Noto Sans KR',sans-serif;font-weight:500;font-size:12.5px;
@@ -66,7 +67,7 @@
 <div class="wrap">
   <header>
     <h1>🎮 미니 게임 상자</h1>
-    <p>브라우저에서 바로 즐기는 캐주얼 게임 세 편</p>
+    <p>브라우저에서 바로 즐기는 캐주얼 게임 네 편</p>
     <div class="wallet"><span>🪙</span><b id="coins">0</b><span class="sub">코인은 머지·나사 게임이 함께 씁니다</span></div>
   </header>
 
@@ -103,6 +104,16 @@
     <div class="go">›</div>
   </a>
 
+  <a class="card" href="recycle-runner.html">
+    <div class="thumb recycle">♻️</div>
+    <div class="body">
+      <h2>쓰담쓰담 러너</h2>
+      <div class="desc">달리며 쓰레기를 줍고, 플라스틱·종이·캔·유리<br>네 통에 알맞게 나눠 담는 러너.</div>
+      <span class="stat">💎 <b id="recycleBest">-</b></span>
+    </div>
+    <div class="go">›</div>
+  </a>
+
   <footer>
     스테이지 진행·별·코인은 이 브라우저에만 저장됩니다 (localStorage).
     <br><button class="reset" id="resetAll">게임 기록 초기화</button>
@@ -131,6 +142,9 @@
   let pb=0; try{ pb=Number(localStorage.getItem('primeBest')||0)||0; }catch(e){}
   set('primeBest', pb.toLocaleString());
 
+  let rb=0; try{ rb=Number(localStorage.getItem('recycleBest')||0)||0; }catch(e){}
+  set('recycleBest', rb.toLocaleString());
+
   const ss=read('screwNutsSave',null);
   set('screwStage', ss? (ss.unlocked||1) : 1);
   set('screwStars', ss? stars(ss) : 0);
@@ -138,7 +152,7 @@
   document.getElementById('resetAll').onclick=()=>{
     if(!confirm('두 게임의 스테이지 진행·별·코인·아이템을 모두 지울까요?')) return;
     try{
-      ['mergeBest','mergeSave','screwNutsSave','primeBest','gameWallet','gameItems']
+      ['mergeBest','mergeSave','screwNutsSave','primeBest','recycleBest','gameWallet','gameItems']
         .forEach(k=>localStorage.removeItem(k));
     }catch(e){}
     location.reload();
