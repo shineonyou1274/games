@@ -39,6 +39,7 @@
   }
   .thumb.merge{background:linear-gradient(160deg,#7ee0ff,#f6cf8a)}
   .thumb.screw{background:linear-gradient(160deg,#ffd45e,#f0862b)}
+  .thumb.prime{background:linear-gradient(160deg,#4df3ff,#9a6bff)}
   .card .body{flex:1;min-width:0}
   .card h2{font-size:24px;line-height:1.15}
   .card .desc{font-family:'Noto Sans KR',sans-serif;font-weight:500;font-size:12.5px;
@@ -65,8 +66,8 @@
 <div class="wrap">
   <header>
     <h1>🎮 미니 게임 상자</h1>
-    <p>브라우저에서 바로 즐기는 캐주얼 퍼즐 두 편</p>
-    <div class="wallet"><span>🪙</span><b id="coins">0</b><span class="sub">코인은 두 게임이 함께 씁니다</span></div>
+    <p>브라우저에서 바로 즐기는 캐주얼 게임 세 편</p>
+    <div class="wallet"><span>🪙</span><b id="coins">0</b><span class="sub">코인은 머지·나사 게임이 함께 씁니다</span></div>
   </header>
 
   <a class="card" href="merge-game.html">
@@ -88,6 +89,16 @@
       <div class="desc">풍선·곰인형·로켓을 나사로 분해하기.<br>같은 색 3개를 홀더에 모으면 팝!</div>
       <span class="stat">🗺️ Stage <b id="screwStage">-</b></span>
       <span class="stat">⭐ <b id="screwStars">-</b></span>
+    </div>
+    <div class="go">›</div>
+  </a>
+
+  <a class="card" href="prime-hunter.html">
+    <div class="thumb prime">🚀</div>
+    <div class="body">
+      <h2>프라임 헌터</h2>
+      <div class="desc">숫자가 적힌 적기 중 소수만 골라 격추.<br>끝나면 오답을 소인수분해로 보여줍니다.</div>
+      <span class="stat">💎 <b id="primeBest">-</b></span>
     </div>
     <div class="go">›</div>
   </a>
@@ -117,6 +128,9 @@
     set('mergeStage',1); set('mergeStars',0); set('mergeBest',best.toLocaleString());
   }
 
+  let pb=0; try{ pb=Number(localStorage.getItem('primeBest')||0)||0; }catch(e){}
+  set('primeBest', pb.toLocaleString());
+
   const ss=read('screwNutsSave',null);
   set('screwStage', ss? (ss.unlocked||1) : 1);
   set('screwStars', ss? stars(ss) : 0);
@@ -124,7 +138,8 @@
   document.getElementById('resetAll').onclick=()=>{
     if(!confirm('두 게임의 스테이지 진행·별·코인·아이템을 모두 지울까요?')) return;
     try{
-      ['mergeBest','mergeSave','screwNutsSave','gameWallet','gameItems'].forEach(k=>localStorage.removeItem(k));
+      ['mergeBest','mergeSave','screwNutsSave','primeBest','gameWallet','gameItems']
+        .forEach(k=>localStorage.removeItem(k));
     }catch(e){}
     location.reload();
   };

@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>PRIME HUNTER · 소수 요격 작전</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap"></noscript>
+<style>
+  :root{
+    --cyan:#4df3ff;
+    --magenta:#ff4dd2;
+    --violet:#9a6bff;
+    --amber:#ffd45e;
+    --red:#ff5470;
+    --green:#5dff9f;
+    --ink:#04040f;
+    --panel:rgba(10,10,30,.88);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;background:#04040f;color:#e8ecff;
+    font-family:"Noto Sans KR",system-ui,-apple-system,sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(90,40,160,.35), transparent 55%),
+      radial-gradient(ellipse at 85% 100%, rgba(0,90,140,.32), transparent 55%);
+  }
+  #stage{
+    position:relative;
+    width:min(100vw, calc(100vh * 900 / 660));
+    height:min(100vh, calc(100vw * 660 / 900));
+    max-width:1080px;max-height:792px;
+  }
+  canvas{
+    display:block;width:100%;height:100%;touch-action:none;
+    border-radius:10px;
+    background:#04040f;
+    box-shadow:0 0 0 2px rgba(77,243,255,.25), 0 0 60px rgba(120,60,220,.35), inset 0 0 80px rgba(0,0,0,.9);
+  }
+  /* CRT 효과 */
+  #crt{
+    position:absolute;inset:0;pointer-events:none;border-radius:10px;overflow:hidden;
+  }
+  #crt::before{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(to bottom, rgba(255,255,255,.045) 0 1px, transparent 1px 3px);
+    mix-blend-mode:overlay;
+  }
+  #crt::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.75) 100%);
+  }
+
+  .screen{
+    position:absolute;inset:0;border-radius:10px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:clamp(12px,3vw,34px);text-align:center;
+    background:linear-gradient(180deg, rgba(4,4,15,.80), rgba(8,4,26,.90));
+    backdrop-filter:blur(2.5px);
+    overflow-y:auto;
+    z-index:5;
+  }
+  .screen::-webkit-scrollbar{width:7px}
+  .screen::-webkit-scrollbar-thumb{background:rgba(154,107,255,.45);border-radius:4px}
+  /* 세로 화면 안내 */
+  #rotate{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    background:rgba(255,212,94,.94);color:#2a1a00;
+    font-size:12px;font-weight:700;text-align:center;padding:9px 12px;
+    display:none;
+  }
+  @media (orientation:portrait) and (hover:none){ #rotate{display:block} }
+  #reportScreen{background:linear-gradient(180deg, rgba(4,4,15,.93), rgba(10,4,30,.96))}
+  .screen.hidden{display:none}
+
+  .logo{
+    font-family:"Press Start 2P",monospace;
+    font-size:clamp(18px,3.6vw,40px);line-height:1.5;letter-spacing:1px;
+    color:#fff;
+    text-shadow:0 0 8px var(--cyan),0 0 22px var(--cyan),0 0 44px rgba(77,243,255,.5), 3px 3px 0 var(--magenta);
+    margin:0 0 6px;
+  }
+  .sub{
+    font-family:"Black Han Sans",sans-serif;
+    font-size:clamp(14px,2.3vw,24px);letter-spacing:4px;color:var(--amber);
+    text-shadow:0 0 14px rgba(255,212,94,.6);margin:0 0 clamp(10px,2vw,20px);
+  }
+  .brief{
+    max-width:640px;font-size:clamp(11.5px,1.5vw,15px);line-height:1.85;
+    color:#c3c9ee;margin:0 0 clamp(12px,2vw,20px);word-break:keep-all;
+  }
+  .rules{
+    list-style:none;margin:0 0 clamp(14px,2.4vw,24px);padding:0;
+    max-width:680px;text-align:left;display:inline-block;
+  }
+  .rules li{
+    font-size:clamp(11px,1.45vw,14.5px);line-height:1.8;color:#aab2dd;
+    padding-left:20px;position:relative;word-break:keep-all;
+  }
+  .rules li::before{
+    content:"▸";position:absolute;left:2px;color:var(--cyan);
+  }
+  .rules b{color:#eef2ff;font-weight:700}
+
+  .diff-row{display:flex;gap:clamp(8px,1.6vw,16px);flex-wrap:wrap;justify-content:center;margin-bottom:clamp(12px,2vw,20px)}
+  .diff{
+    cursor:pointer;border:2px solid rgba(154,107,255,.5);border-radius:8px;
+    background:rgba(20,14,48,.75);color:#cfd6ff;
+    padding:clamp(9px,1.4vw,14px) clamp(14px,2.2vw,26px);
+    font-family:"Noto Sans KR",sans-serif;font-weight:700;
+    font-size:clamp(11px,1.4vw,14px);line-height:1.6;
+    transition:.15s;min-width:118px;
+  }
+  .diff span{display:block;font-family:"Press Start 2P",monospace;font-size:clamp(8px,1vw,10px);color:#8f9ad0;margin-top:6px;letter-spacing:0}
+  .diff:hover{border-color:var(--cyan);color:#fff;transform:translateY(-2px)}
+  .diff.on{
+    border-color:var(--cyan);color:#04040f;background:linear-gradient(180deg,#7ff6ff,#2ad3ff);
+    box-shadow:0 0 22px rgba(77,243,255,.55);
+  }
+  .diff.on span{color:#083041}
+
+  .btn{
+    cursor:pointer;border:none;border-radius:8px;
+    font-family:"Press Start 2P",monospace;
+    font-size:clamp(10px,1.5vw,15px);letter-spacing:1px;
+    padding:clamp(12px,1.8vw,18px) clamp(20px,3.4vw,40px);
+    color:#0a0320;background:linear-gradient(180deg,#ffe79a,#ffc93c);
+    box-shadow:0 0 24px rgba(255,201,60,.5), 0 5px 0 #a9741a;
+    transition:.12s;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 0 34px rgba(255,201,60,.75), 0 7px 0 #a9741a}
+  .btn:active{transform:translateY(3px);box-shadow:0 0 20px rgba(255,201,60,.5), 0 2px 0 #a9741a}
+  .btn.ghost{
+    background:transparent;color:var(--cyan);box-shadow:none;border:2px solid rgba(77,243,255,.55);
+    font-size:clamp(9px,1.2vw,12px);padding:clamp(9px,1.3vw,13px) clamp(14px,2.4vw,26px);
+  }
+  .btn.ghost:hover{background:rgba(77,243,255,.12);transform:translateY(-2px);box-shadow:none}
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
+
+  .hint{margin-top:clamp(10px,1.8vw,18px);font-size:clamp(10px,1.2vw,12.5px);color:#7d86b8;letter-spacing:.3px}
+
+  /* 결과 리포트 */
+  #reportScreen{justify-content:flex-start;overflow-y:auto;padding-top:clamp(14px,3vw,30px)}
+  #reportScreen::-webkit-scrollbar{width:8px}
+  #reportScreen::-webkit-scrollbar-thumb{background:rgba(154,107,255,.5);border-radius:4px}
+  .over-title{
+    font-family:"Press Start 2P",monospace;font-size:clamp(16px,3vw,32px);color:#fff;
+    text-shadow:0 0 10px var(--red),0 0 30px var(--red);margin:0 0 4px;
+  }
+  .stat-grid{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(6px,1vw,12px);
+    width:100%;max-width:680px;margin:clamp(12px,2vw,20px) 0;
+  }
+  .stat{
+    background:rgba(18,14,46,.8);border:1px solid rgba(154,107,255,.35);border-radius:8px;
+    padding:clamp(8px,1.3vw,14px) 6px;
+  }
+  .stat .k{font-size:clamp(9px,1.1vw,11.5px);color:#8f9ad0;letter-spacing:.5px}
+  .stat .v{font-family:"Press Start 2P",monospace;font-size:clamp(12px,1.9vw,20px);color:var(--cyan);margin-top:8px;text-shadow:0 0 12px rgba(77,243,255,.6)}
+  .stat.warn .v{color:var(--red);text-shadow:0 0 12px rgba(255,84,112,.6)}
+  .stat.good .v{color:var(--green);text-shadow:0 0 12px rgba(93,255,159,.6)}
+
+  .rep-block{
+    width:100%;max-width:680px;text-align:left;
+    background:rgba(12,10,34,.75);border:1px solid rgba(154,107,255,.28);border-radius:8px;
+    padding:clamp(10px,1.5vw,16px);margin-bottom:10px;
+  }
+  .rep-block h4{
+    margin:0 0 8px;font-size:clamp(11px,1.4vw,14px);font-weight:700;letter-spacing:.5px;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{
+    font-family:"Press Start 2P",monospace;font-size:clamp(8px,1vw,10.5px);
+    padding:6px 9px;border-radius:5px;line-height:1.4;
+  }
+  .chip.ok{background:rgba(93,255,159,.13);color:var(--green);border:1px solid rgba(93,255,159,.35)}
+  .chip.bad{background:rgba(255,84,112,.13);color:#ff9aae;border:1px solid rgba(255,84,112,.35);font-family:"Noto Sans KR",sans-serif;font-size:clamp(9px,1.15vw,12px);font-weight:700}
+  .chip.miss{background:rgba(255,212,94,.12);color:var(--amber);border:1px solid rgba(255,212,94,.35)}
+  .empty{font-size:clamp(10px,1.2vw,12.5px);color:#6f78a8}
+  .comment{
+    max-width:680px;font-size:clamp(11px,1.4vw,14px);line-height:1.8;color:#c3c9ee;
+    margin:6px 0 clamp(12px,2vw,18px);word-break:keep-all;
+  }
+
+  /* 모바일 터치 조작 */
+  #touch{
+    position:absolute;left:0;right:0;bottom:0;z-index:4;
+    display:none;justify-content:space-between;align-items:flex-end;
+    padding:10px 12px 14px;gap:10px;pointer-events:none;
+  }
+  #touch.on{display:flex}
+  .tbtn{
+    pointer-events:auto;
+    touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+    width:74px;height:74px;border-radius:50%;
+    border:2px solid rgba(77,243,255,.45);background:rgba(10,14,40,.6);
+    color:var(--cyan);font-size:26px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    backdrop-filter:blur(3px);
+  }
+  .tbtn.fire{
+    width:92px;height:92px;border-color:rgba(255,84,112,.55);color:#ff8fa3;font-size:14px;
+    font-family:"Press Start 2P",monospace;
+  }
+  .tgroup{display:flex;gap:10px;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="rotate">기기를 가로로 돌리면 화면을 더 크게 사용할 수 있다.</div>
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="crt"></div>
+
+  <!-- 터치 조작 -->
+  <div id="touch">
+    <div class="tgroup">
+      <button class="tbtn" id="tLeft">◀</button>
+      <button class="tbtn" id="tRight">▶</button>
+    </div>
+    <button class="tbtn fire" id="tFire">FIRE</button>
+  </div>
+
+  <!-- 시작 화면 -->
+  <div class="screen" id="titleScreen">
+    <h1 class="logo">PRIME HUNTER</h1>
+    <p class="sub">소 수 요 격 작 전</p>
+    <p class="brief">
+      우주 정거장으로 적 함대가 접근하고 있다. 함대의 기체에는 저마다 숫자가 하나씩 적혀 있는데,
+      그 가운데 <b style="color:var(--cyan)">소수가 적힌 기체</b>만이 정거장을 무너뜨릴 폭탄을 싣고 있다.
+      아래쪽 요격기를 조종하여 소수가 적힌 기체만 정확히 격추해 보자.
+    </p>
+    <ul class="rules">
+      <li><b>← →</b> 키로 요격기를 좌우로 움직인다.</li>
+      <li><b>스페이스 바</b>를 누르면 플라스마 탄이 발사된다.</li>
+      <li>소수가 적힌 기체를 맞히면 점수를 얻고 <b>콤보 배수</b>가 올라간다.</li>
+      <li>소수가 아닌 기체를 맞히면 점수가 깎이고 <b>소인수분해</b>가 화면에 나타난다.</li>
+      <li>소수를 놓쳐 바닥에 닿거나 기체와 충돌하면 하트가 하나 줄고, 하트가 모두 사라지면 작전이 끝난다.</li>
+    </ul>
+    <div class="diff-row" id="diffRow">
+      <button class="diff on" data-d="easy">쉬움<span>2 - 50</span></button>
+      <button class="diff" data-d="normal">보통<span>2 - 100</span></button>
+      <button class="diff" data-d="hard">어려움<span>2 - 200</span></button>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="startBtn">▶ 작전 시작</button>
+    </div>
+    <p class="hint" id="bestLine" style="visibility:hidden">최고 기록 000000</p>
+    <p class="hint" style="margin-top:4px">P 키 · 일시정지 &nbsp;|&nbsp; M 키 · 소리 끄기/켜기 &nbsp;|&nbsp; Enter · 시작</p>
+  </div>
+
+  <!-- 일시정지 -->
+  <div class="screen hidden" id="pauseScreen">
+    <h1 class="logo" style="text-shadow:0 0 8px var(--amber),0 0 26px var(--amber),3px 3px 0 var(--violet)">PAUSED</h1>
+    <p class="brief" style="margin-bottom:18px">작전이 일시 정지되었다. 준비가 되면 계속 진행하자.</p>
+    <div class="btn-row">
+      <button class="btn" id="resumeBtn">계속하기</button>
+      <button class="btn ghost" id="quitBtn">처음으로</button>
+    </div>
+  </div>
+
+  <!-- 결과 리포트 -->
+  <div class="screen hidden" id="reportScreen">
+    <h1 class="over-title">GAME OVER</h1>
+    <p class="sub" style="font-size:clamp(12px,1.8vw,18px);letter-spacing:2px;margin-bottom:4px" id="repRank">작전 결과 보고서</p>
+    <p class="comment" id="repComment"></p>
+    <div class="stat-grid">
+      <div class="stat"><div class="k">최종 점수</div><div class="v" id="sScore">0</div></div>
+      <div class="stat"><div class="k">도달 웨이브</div><div class="v" id="sWave">1</div></div>
+      <div class="stat good"><div class="k">명중 정확도</div><div class="v" id="sAcc">0%</div></div>
+      <div class="stat"><div class="k">최대 콤보</div><div class="v" id="sCombo">0</div></div>
+    </div>
+    <div class="rep-block">
+      <h4 style="color:var(--green)">✔ 정확히 격추한 소수 <span id="cOk" style="color:#6f78a8;font-weight:400"></span></h4>
+      <div class="chips" id="listOk"></div>
+    </div>
+    <div class="rep-block">
+      <h4 style="color:#ff9aae">✘ 소수가 아닌데 격추한 수 <span id="cBad" style="color:#6f78a8;font-weight:400"></span></h4>
+      <div class="chips" id="listBad"></div>
+    </div>
+    <div class="rep-block">
+      <h4 style="color:var(--amber)">▽ 놓쳐서 통과시킨 소수 <span id="cMiss" style="color:#6f78a8;font-weight:400"></span></h4>
+      <div class="chips" id="listMiss"></div>
+    </div>
+    <div class="btn-row" style="margin:8px 0 20px">
+      <button class="btn" id="retryBtn">↻ 다시 도전</button>
+      <button class="btn ghost" id="homeBtn">처음으로</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   0. 기본 상수
+   ============================================================ */
+const W = 900, H = 660;          // 논리 해상도
+const HUD_H = 62;                // 상단 HUD 높이
+const FLOOR_Y = H - 26;          // 적이 닿으면 안 되는 바닥선
+
+const cv  = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+function resize(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width  = W * dpr;
+  cv.height = H * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.imageSmoothingEnabled = true;
+}
+resize();
+window.addEventListener('resize', resize);
+
+/* ============================================================
+   1. 수학 유틸 — 소수 판정과 소인수분해
+   ============================================================ */
+function isPrime(n){
+  if(!Number.isInteger(n) || n < 2) return false;
+  if(n < 4) return true;                 // 2, 3
+  if(n % 2 === 0) return false;
+  for(let i = 3; i * i <= n; i += 2){
+    if(n % i === 0) return false;
+  }
+  return true;
+}
+function factorize(n){                    // 12 → "2×2×3"
+  if(n < 2) return String(n);
+  const f = [];
+  let m = n;
+  for(let d = 2; d * d <= m; d++){
+    while(m % d === 0){ f.push(d); m /= d; }
+  }
+  if(m > 1) f.push(m);
+  return f.join('×');
+}
+function smallestFactor(n){
+  if(n % 2 === 0) return 2;
+  for(let i = 3; i * i <= n; i += 2) if(n % i === 0) return i;
+  return n;
+}
+
+/* ============================================================
+   2. 난이도 설정
+   ============================================================ */
+const DIFF = {
+  easy  : { label:'쉬움',   max:50,  speed:0.82, spawn:1.20, primeRate:0.45 },
+  normal: { label:'보통',   max:100, speed:1.00, spawn:1.00, primeRate:0.42 },
+  hard  : { label:'어려움', max:200, speed:1.22, spawn:0.82, primeRate:0.40 }
+};
+let diffKey = 'easy';
+
+let primePool = [], compositePool = [];
+function buildPools(max){
+  primePool = []; compositePool = [];
+  for(let n = 2; n <= max; n++){
+    (isPrime(n) ? primePool : compositePool).push(n);
+  }
+}
+
+/* ============================================================
+   3. 사운드 (WebAudio · 외부 파일 없음)
+   ============================================================ */
+const Snd = (function(){
+  let ac = null, on = true;
+  function ctxOK(){
+    if(!on) return null;
+    try{
+      if(!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      if(ac.state === 'suspended') ac.resume();
+      return ac;
+    }catch(e){ return null; }
+  }
+  function tone(freq, dur, type, vol, slideTo){
+    const a = ctxOK(); if(!a) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'square';
+    o.frequency.setValueAtTime(freq, a.currentTime);
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(30,slideTo), a.currentTime + dur);
+    g.gain.setValueAtTime(0.0001, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol || 0.12, a.currentTime + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime + dur + 0.02);
+  }
+  function noise(dur, vol, filterHz){
+    const a = ctxOK(); if(!a) return;
+    const n = Math.floor(a.sampleRate * dur);
+    const buf = a.createBuffer(1, n, a.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i = 0; i < n; i++) d[i] = (Math.random()*2-1) * (1 - i/n);
+    const s = a.createBufferSource(); s.buffer = buf;
+    const f = a.createBiquadFilter(); f.type='lowpass'; f.frequency.value = filterHz || 1400;
+    const g = a.createGain(); g.gain.value = vol || 0.22;
+    s.connect(f); f.connect(g); g.connect(a.destination); s.start();
+  }
+  return {
+    toggle(){ on = !on; return on; },
+    isOn(){ return on; },
+    shoot(){ tone(880, 0.08, 'square', 0.05, 300); },
+    good(){  tone(660,0.07,'square',0.09); setTimeout(()=>tone(880,0.07,'square',0.09),60); setTimeout(()=>tone(1320,0.14,'square',0.09),120); },
+    bad(){   tone(150, 0.30, 'sawtooth', 0.13, 70); noise(0.2, 0.12, 700); },
+    boom(){  noise(0.35, 0.25, 1100); },
+    hurt(){  tone(300, 0.35, 'triangle', 0.16, 90); noise(0.3, 0.18, 500); },
+    wave(){  [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.12,'square',0.08),i*85)); },
+    over(){  [440,370,294,220,165].forEach((f,i)=>setTimeout(()=>tone(f,0.28,'square',0.11),i*160)); }
+  };
+})();
+
+/* ============================================================
+   4. 게임 상태
+   ============================================================ */
+let state = 'title';   // title | playing | paused | over
+let G = null;
+let overAt = 0;
+
+function newGame(){
+  const d = DIFF[diffKey];
+  buildPools(d.max);
+  return {
+    d, t:0, score:0, lives:3, wave:1,
+    combo:0, maxCombo:0,
+    spawnedInWave:0, waveTarget:10,
+    spawnTimer:800,
+    shake:0, flash:0, flashColor:'255,84,112',
+    banner:null, bannerT:0,
+    player:{ x:W/2, y:H-76, w:58, h:46, cd:0, inv:0, tilt:0 },
+    bullets:[], enemies:[], parts:[], texts:[],
+    hitOk:[], hitBad:[], missed:[], shotsFired:0
+  };
+}
+
+/* 별 배경 (3개 층) */
+const STAR_TINT = ['255,255,255','200,225,255','255,235,200','210,200,255'];
+const stars = [];
+for(let i = 0; i < 320; i++){
+  const layer = i < 170 ? 0 : (i < 265 ? 1 : 2);
+  stars.push({
+    x: Math.random()*W, y: Math.random()*H,
+    r: [0.9,1.5,2.3][layer],
+    v: [10,24,46][layer],
+    a: [0.45,0.7,0.95][layer] * (0.6 + Math.random()*0.4),
+    tint: STAR_TINT[(Math.random()*STAR_TINT.length)|0],
+    flare: layer === 2 && Math.random() < 0.35,
+    tw: Math.random()*Math.PI*2
+  });
+}
+/* 성운 배경 — 한 번만 그려서 재사용 */
+const neb = document.createElement('canvas');
+neb.width = W; neb.height = H;
+(function(){
+  const c = neb.getContext('2d');
+  const blobs = [
+    [140, 120, 320, '154,107,255', .30],
+    [760, 220, 380, '0,150,200', .26],
+    [420, 540, 340, '255,77,210', .17],
+    [620, 620, 280, '77,243,255', .13],
+    [120, 620, 260, '120,60,220', .18]
+  ];
+  blobs.forEach(([x,y,r,rgb,a])=>{
+    const g = c.createRadialGradient(x,y,0,x,y,r);
+    g.addColorStop(0, `rgba(${rgb},${a})`);
+    g.addColorStop(1, `rgba(${rgb},0)`);
+    c.fillStyle = g; c.fillRect(0,0,W,H);
+  });
+})();
+
+/* ============================================================
+   5. 입력
+   ============================================================ */
+const keys = {};
+const touch = { left:false, right:false, fire:false };
+
+window.addEventListener('keydown', e=>{
+  const k = e.key;
+  if([' ','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(k)) e.preventDefault();
+  if(keys[k]) return;
+  keys[k] = true;
+
+  if(k === 'p' || k === 'P' || k === 'ㅔ'){ togglePause(); }
+  if(k === 'm' || k === 'M' || k === 'ㅡ'){ Snd.toggle(); }
+  if(state === 'title' && (k === 'Enter' || k === ' ')) startGame();
+  if(state === 'over'  && (k === 'Enter' || k === ' ') && performance.now() - overAt > 900) startGame();
+});
+window.addEventListener('keyup', e=>{ keys[e.key] = false; });
+window.addEventListener('blur', ()=>{ for(const k in keys) keys[k] = false; });
+
+function bindHold(el, prop){
+  const on  = e=>{ e.preventDefault(); touch[prop] = true; };
+  const off = e=>{ e.preventDefault(); touch[prop] = false; };
+  el.addEventListener('touchstart', on, {passive:false});
+  el.addEventListener('touchend', off);
+  el.addEventListener('touchcancel', off);
+  el.addEventListener('mousedown', on);
+  el.addEventListener('mouseup', off);
+  el.addEventListener('mouseleave', off);
+}
+bindHold(document.getElementById('tLeft'),  'left');
+bindHold(document.getElementById('tRight'), 'right');
+bindHold(document.getElementById('tFire'),  'fire');
+if(matchMedia('(hover:none)').matches) document.getElementById('touch').classList.add('on');
+
+/* ============================================================
+   6. 화면 전환
+   ============================================================ */
+const elTitle  = document.getElementById('titleScreen');
+const elPause  = document.getElementById('pauseScreen');
+const elReport = document.getElementById('reportScreen');
+
+function show(el){ [elTitle, elPause, elReport].forEach(e=>e.classList.add('hidden')); if(el) el.classList.remove('hidden'); }
+
+document.querySelectorAll('.diff').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.diff').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    diffKey = b.dataset.d;
+  });
+});
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('retryBtn').addEventListener('click', startGame);
+document.getElementById('resumeBtn').addEventListener('click', togglePause);
+document.getElementById('quitBtn').addEventListener('click', goTitle);
+document.getElementById('homeBtn').addEventListener('click', goTitle);
+
+function startGame(){
+  G = newGame();
+  state = 'playing';
+  show(null);
+  banner('WAVE 1', '숫자를 확인하고 소수만 요격하자');
+  Snd.wave();
+}
+function goTitle(){ state = 'title'; refreshBest(); show(elTitle); }
+
+/* 최고 기록 — 이 브라우저에 저장된다 */
+let best = 0;
+try{ best = Number(localStorage.getItem('primeBest') || 0) || 0; }catch(e){}
+function refreshBest(){
+  const el = document.getElementById('bestLine');
+  if(best > 0){
+    el.style.visibility = 'visible';
+    el.textContent = '최고 기록 ' + String(best).padStart(6,'0');
+  }
+}
+refreshBest();
+function togglePause(){
+  if(state === 'playing'){ state = 'paused'; show(elPause); }
+  else if(state === 'paused'){ state = 'playing'; show(null); }
+}
+
+function banner(big, small){
+  G.banner = { big, small };
+  G.bannerT = 1900;
+}
+
+/* ============================================================
+   7. 생성기
+   ============================================================ */
+function pickNumber(){
+  const wantPrime = Math.random() < G.d.primeRate;
+  const pool = (wantPrime && primePool.length) ? primePool : compositePool;
+  return pool[(Math.random() * pool.length) | 0];
+}
+function spawnEnemy(){
+  const num = pickNumber();
+  const w = 74, h = 54;
+  const lanes = 7;
+  const lane = (Math.random() * lanes) | 0;
+  const laneW = (W - 60) / lanes;
+  const x = 30 + laneW * lane + laneW/2 + (Math.random()*20 - 10);
+  const base = 30 + G.wave * 5.6;
+  G.enemies.push({
+    x: Math.max(w/2+8, Math.min(W-w/2-8, x)),
+    y: HUD_H - 42,
+    w, h, num,
+    prime: isPrime(num),
+    vy: base * G.d.speed * (0.88 + Math.random()*0.28),
+    phase: Math.random()*Math.PI*2,
+    amp: 10 + Math.random()*16,
+    /* 색은 숫자와 무관하게 무작위로 정한다 — 색만 보고 소수를 알아챌 수 없도록 */
+    hue: [190,265,320,155,25,215][(Math.random()*6)|0] + (Math.random()*18 - 9),
+    dead: false, hitFlash: 0
+  });
+  G.spawnedInWave++;
+}
+function boom(x, y, rgb, n){
+  for(let i = 0; i < n; i++){
+    const a = Math.random()*Math.PI*2, s = 40 + Math.random()*230;
+    G.parts.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, life:0.45+Math.random()*0.5, max:0.95, rgb, r:1.5+Math.random()*3 });
+  }
+}
+function floatText(x, y, text, color, size){
+  G.texts.push({ x, y, text, color, size: size||18, life:1.7, max:1.7 });
+}
+
+/* ============================================================
+   8. 업데이트
+   ============================================================ */
+function update(dt){
+  const p = G.player;
+  G.t += dt;
+
+  /* --- 배경 --- */
+  for(const s of stars){
+    s.y += s.v * dt * (1 + G.wave*0.03);
+    s.tw += dt * 3;
+    if(s.y > H){ s.y = -2; s.x = Math.random()*W; }
+  }
+
+  /* --- 플레이어 이동 --- */
+  const left  = keys['ArrowLeft']  || keys['a'] || keys['A'] || touch.left;
+  const right = keys['ArrowRight'] || keys['d'] || keys['D'] || touch.right;
+  const SPD = 430;
+  let target = 0;
+  if(left)  { p.x -= SPD*dt; target = -1; }
+  if(right) { p.x += SPD*dt; target =  1; }
+  p.tilt += (target - p.tilt) * Math.min(1, dt*10);
+  p.x = Math.max(p.w/2+6, Math.min(W - p.w/2 - 6, p.x));
+
+  /* --- 발사 --- */
+  p.cd -= dt;
+  if((keys[' '] || keys['Spacebar'] || touch.fire) && p.cd <= 0){
+    p.cd = 0.21;
+    G.bullets.push({ x:p.x, y:p.y - 26, vy:-640, trail:[] });
+    G.shotsFired++;
+    Snd.shoot();
+  }
+  if(p.inv > 0) p.inv -= dt;
+
+  /* --- 탄환 --- */
+  for(const b of G.bullets){
+    b.trail.unshift({x:b.x, y:b.y});
+    if(b.trail.length > 7) b.trail.pop();
+    b.y += b.vy * dt;
+  }
+  G.bullets = G.bullets.filter(b => b.y > HUD_H - 30);
+
+  /* --- 적 스폰 --- */
+  /* 화면에 동시에 뜨는 기체 수를 제한하여 판단할 시간을 확보한다 */
+  const maxOnScreen = Math.min(7, 4 + Math.floor((G.wave-1)/2));
+  G.spawnTimer -= dt * 1000;
+  if(G.spawnTimer <= 0 && G.spawnedInWave < G.waveTarget && G.enemies.length < maxOnScreen){
+    spawnEnemy();
+    const base = Math.max(480, 1250 - G.wave * 55);
+    G.spawnTimer = base * G.d.spawn * (0.85 + Math.random()*0.4);
+  }
+
+  /* --- 적 이동 --- */
+  for(const e of G.enemies){
+    e.y += e.vy * dt;
+    e.phase += dt * 1.6;
+    e.dx = Math.sin(e.phase) * e.amp;
+    if(e.hitFlash > 0) e.hitFlash -= dt;
+
+    const ex = e.x + e.dx;
+
+    /* 플레이어 충돌 */
+    if(p.inv <= 0 && !e.dead &&
+       Math.abs(ex - p.x) < (e.w/2 + p.w/2 - 10) &&
+       Math.abs(e.y - p.y) < (e.h/2 + p.h/2 - 8)){
+      e.dead = true;
+      loseLife(ex, e.y, '충돌!');
+      boom(ex, e.y, '255,84,112', 26);
+    }
+    /* 바닥 도달 */
+    else if(e.y > FLOOR_Y && !e.dead){
+      e.dead = true;
+      if(e.prime){
+        G.missed.push(e.num);
+        loseLife(ex, FLOOR_Y - 20, `소수 ${e.num} 놓침`);
+        boom(ex, FLOOR_Y, '255,212,94', 22);
+      }else{
+        /* 소수가 아닌 기체는 그냥 지나간다 */
+        G.parts.push({x:ex,y:FLOOR_Y,vx:0,vy:0,life:0.3,max:0.3,rgb:'120,130,180',r:2});
+      }
+    }
+  }
+
+  /* --- 탄환 × 적 --- */
+  for(const b of G.bullets){
+    if(b.gone) continue;
+    for(const e of G.enemies){
+      if(e.dead) continue;
+      const ex = e.x + e.dx;
+      if(Math.abs(b.x - ex) < e.w/2 && Math.abs(b.y - e.y) < e.h/2){
+        b.gone = true;
+        e.dead = true;
+        resolveHit(e, ex);
+        break;
+      }
+    }
+  }
+  G.bullets = G.bullets.filter(b => !b.gone);
+  G.enemies = G.enemies.filter(e => !e.dead);
+
+  /* --- 웨이브 진행 --- */
+  if(G.spawnedInWave >= G.waveTarget && G.enemies.length === 0 && state === 'playing'){
+    G.wave++;
+    G.spawnedInWave = 0;
+    G.waveTarget = 10 + G.wave * 2;
+    G.spawnTimer = 900;
+    banner('WAVE ' + G.wave, '적의 속도가 빨라졌다');
+    Snd.wave();
+  }
+
+  /* --- 파티클 / 텍스트 --- */
+  for(const q of G.parts){
+    q.x += q.vx*dt; q.y += q.vy*dt;
+    q.vy += 220*dt; q.vx *= 0.98;
+    q.life -= dt;
+  }
+  G.parts = G.parts.filter(q => q.life > 0);
+
+  for(const t of G.texts){ t.y -= 26*dt; t.life -= dt; }
+  G.texts = G.texts.filter(t => t.life > 0);
+
+  if(G.shake > 0) G.shake = Math.max(0, G.shake - dt*46);
+  if(G.flash > 0) G.flash = Math.max(0, G.flash - dt*2.4);
+  if(G.bannerT > 0) G.bannerT -= dt*1000;
+}
+
+function resolveHit(e, ex){
+  if(e.prime){
+    G.combo++;
+    G.maxCombo = Math.max(G.maxCombo, G.combo);
+    const mult = Math.min(5, 1 + Math.floor(G.combo/4));
+    const gain = 100 * mult;
+    G.score += gain;
+    G.hitOk.push(e.num);
+    floatText(ex, e.y - 6, `${e.num} 소수  +${gain}`, '93,255,159', 20);
+    if(mult > 1) floatText(ex, e.y + 18, `COMBO ×${mult}`, '77,243,255', 14);
+    boom(ex, e.y, '93,255,159', 24);
+    Snd.good(); Snd.boom();
+    G.shake = Math.min(9, 4 + mult);
+  }else{
+    G.combo = 0;
+    G.score = Math.max(0, G.score - 70);
+    const f = factorize(e.num);
+    G.hitBad.push({ n:e.num, f });
+    floatText(ex, e.y - 6, `${e.num} = ${f}`, '255,110,140', 22);
+    floatText(ex, e.y + 20, `소수가 아니다  -70`, '255,154,174', 14);
+    boom(ex, e.y, '255,84,112', 20);
+    Snd.bad();
+    G.shake = 12;
+    G.flash = 0.55; G.flashColor = '255,84,112';
+  }
+}
+
+function loseLife(x, y, msg){
+  G.lives--;
+  G.combo = 0;
+  G.player.inv = 1.6;
+  G.shake = 18;
+  G.flash = 0.8; G.flashColor = '255,84,112';
+  floatText(x, y, msg, '255,84,112', 20);
+  Snd.hurt();
+  if(G.lives <= 0) gameOver();
+}
+
+/* ============================================================
+   9. 그리기
+   ============================================================ */
+function drawBackground(){
+  ctx.fillStyle = '#04040f';
+  ctx.fillRect(0,0,W,H);
+  ctx.drawImage(neb, 0, 0);
+
+  for(const s of stars){
+    const a = s.a * (0.65 + 0.35*Math.sin(s.tw));
+    if(s.flare){
+      ctx.fillStyle = `rgba(${s.tint},${a*0.32})`;
+      ctx.fillRect(s.x - 4, s.y + s.r/2 - 0.4, 9, 0.9);
+      ctx.fillRect(s.x + s.r/2 - 0.4, s.y - 4, 0.9, 9);
+    }
+    ctx.fillStyle = `rgba(${s.tint},${a})`;
+    ctx.fillRect(s.x, s.y, s.r, s.r);
+  }
+  /* 아래쪽 방어선 */
+  const g = ctx.createLinearGradient(0, FLOOR_Y-40, 0, H);
+  g.addColorStop(0,'rgba(255,84,112,0)');
+  g.addColorStop(1,'rgba(255,84,112,.22)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, FLOOR_Y-40, W, H-FLOOR_Y+40);
+  ctx.strokeStyle = 'rgba(255,84,112,.55)';
+  ctx.setLineDash([14,10]);
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawPlayer(){
+  const p = G.player;
+  if(p.inv > 0 && Math.floor(p.inv*14) % 2 === 0) return;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.tilt * 0.16);
+
+  /* 엔진 화염 (중앙 + 좌우 보조) */
+  [[0, 1.0],[-13, .55],[13, .55]].forEach(([ox, sc])=>{
+    const fl = (18 + Math.random()*14) * sc;
+    const fw = 8 * sc;
+    const fg = ctx.createLinearGradient(0, 16, 0, 16+fl);
+    fg.addColorStop(0,'rgba(255,245,200,.95)');
+    fg.addColorStop(.45,'rgba(255,140,60,.75)');
+    fg.addColorStop(1,'rgba(255,60,90,0)');
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.moveTo(ox-fw, 14); ctx.lineTo(ox+fw, 14); ctx.lineTo(ox, 16+fl);
+    ctx.closePath(); ctx.fill();
+  });
+
+  /* 좌우 포드 */
+  ctx.shadowColor = 'rgba(154,107,255,.85)'; ctx.shadowBlur = 14;
+  ctx.fillStyle = '#7b5ce0';
+  [-1,1].forEach(s=>{
+    ctx.beginPath();
+    ctx.moveTo(s*15,-6); ctx.lineTo(s*29,8); ctx.lineTo(s*29,14); ctx.lineTo(s*15,14);
+    ctx.closePath(); ctx.fill();
+  });
+
+  /* 본체 */
+  ctx.shadowColor = 'rgba(77,243,255,.95)'; ctx.shadowBlur = 22;
+  const bg = ctx.createLinearGradient(0,-26,0,18);
+  bg.addColorStop(0,'#f2feff'); bg.addColorStop(.4,'#4df3ff'); bg.addColorStop(1,'#14527d');
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  ctx.moveTo(0,-28);
+  ctx.lineTo(7,-12); ctx.lineTo(13,-2); ctx.lineTo(20,12);
+  ctx.lineTo(10,12); ctx.lineTo(7,16); ctx.lineTo(-7,16); ctx.lineTo(-10,12);
+  ctx.lineTo(-20,12); ctx.lineTo(-13,-2); ctx.lineTo(-7,-12);
+  ctx.closePath(); ctx.fill();
+
+  /* 동체 라인 */
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(0,-22); ctx.lineTo(0,12); ctx.stroke();
+
+  /* 조종석 */
+  ctx.shadowBlur = 12; ctx.shadowColor = 'rgba(255,77,210,.95)';
+  const cg = ctx.createRadialGradient(0,-9,0,0,-8,9);
+  cg.addColorStop(0,'#ffe6f9'); cg.addColorStop(1,'#ff4dd2');
+  ctx.fillStyle = cg;
+  ctx.beginPath(); ctx.ellipse(0,-8,5.5,9,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawEnemy(e){
+  const x = e.x + e.dx, y = e.y;
+  const w = e.w, h = e.h;
+  ctx.save();
+  ctx.translate(x, y);
+
+  const glow = e.hitFlash > 0 ? 26 : 14;
+  ctx.shadowColor = `hsla(${e.hue},90%,65%,.75)`;
+  ctx.shadowBlur = glow;
+
+  /* 날개 */
+  ctx.fillStyle = `hsla(${e.hue},70%,42%,1)`;
+  ctx.beginPath();
+  ctx.moveTo(-w/2, -4); ctx.lineTo(-w/2+14, -h/2+4);
+  ctx.lineTo(-w/2+14, h/2-6); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(w/2, -4); ctx.lineTo(w/2-14, -h/2+4);
+  ctx.lineTo(w/2-14, h/2-6); ctx.closePath(); ctx.fill();
+
+  /* 동체 */
+  const bg = ctx.createLinearGradient(0,-h/2,0,h/2);
+  bg.addColorStop(0, `hsla(${e.hue},85%,70%,1)`);
+  bg.addColorStop(.5,`hsla(${e.hue},80%,48%,1)`);
+  bg.addColorStop(1, `hsla(${e.hue},70%,26%,1)`);
+  ctx.fillStyle = bg;
+  const bw = w - 26, bh = h - 8;
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(-bw/2, -bh/2, bw, bh, 10);
+  else ctx.rect(-bw/2, -bh/2, bw, bh);
+  ctx.fill();
+
+  /* 테두리 */
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = e.hitFlash > 0 ? '#fff' : `hsla(${e.hue},100%,85%,.85)`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  /* 숫자 패널 */
+  ctx.fillStyle = 'rgba(6,6,20,.82)';
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(-bw/2+5, -bh/2+5, bw-10, bh-10, 7);
+  else ctx.rect(-bw/2+5, -bh/2+5, bw-10, bh-10);
+  ctx.fill();
+
+  /* 숫자 */
+  const txt = String(e.num);
+  let fs = txt.length >= 3 ? 20 : 26;
+  ctx.font = `${fs}px "Press Start 2P", monospace`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowColor = '#fff'; ctx.shadowBlur = 10;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(txt, 0, 1);
+  ctx.shadowBlur = 0;
+
+  /* 하단 스캐너 불빛 */
+  ctx.fillStyle = `hsla(${e.hue},100%,75%,${0.4+0.4*Math.sin(e.phase*3)})`;
+  ctx.fillRect(-6, bh/2 - 2, 12, 3);
+  ctx.restore();
+}
+
+function drawBullets(){
+  for(const b of G.bullets){
+    for(let i = b.trail.length-1; i >= 0; i--){
+      const t = b.trail[i], a = (1 - i/b.trail.length) * 0.45;
+      ctx.fillStyle = `rgba(255,77,210,${a})`;
+      ctx.fillRect(t.x-1.5, t.y, 3, 8);
+    }
+    ctx.shadowColor = '#ff4dd2'; ctx.shadowBlur = 14;
+    const g = ctx.createLinearGradient(0,b.y-10,0,b.y+8);
+    g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#ff4dd2');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(b.x-3, b.y-11, 6, 20, 3);
+    else ctx.rect(b.x-3, b.y-11, 6, 20);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawParticles(){
+  for(const q of G.parts){
+    const a = Math.max(0, q.life/q.max);
+    ctx.fillStyle = `rgba(${q.rgb},${a})`;
+    ctx.fillRect(q.x-q.r/2, q.y-q.r/2, q.r, q.r);
+  }
+}
+
+function drawTexts(){
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for(const t of G.texts){
+    const a = Math.min(1, t.life/0.5);
+    ctx.font = `700 ${t.size}px "Noto Sans KR", sans-serif`;
+    ctx.shadowColor = `rgba(${t.color},.9)`; ctx.shadowBlur = 12;
+    ctx.fillStyle = `rgba(${t.color},${a})`;
+    ctx.fillText(t.text, Math.max(70, Math.min(W-70, t.x)), t.y);
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawHeart(x, y, s, filled){
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(s, s);
+  ctx.beginPath();
+  ctx.moveTo(0, 3);
+  ctx.bezierCurveTo(-1,-1,-5,-1,-5,-4);
+  ctx.bezierCurveTo(-5,-7,-2,-8, 0,-4.5);
+  ctx.bezierCurveTo( 2,-8, 5,-7, 5,-4);
+  ctx.bezierCurveTo( 5,-1, 1,-1, 0, 3);
+  ctx.closePath();
+  if(filled){
+    ctx.shadowColor = 'rgba(255,84,112,.95)'; ctx.shadowBlur = 12;
+    ctx.fillStyle = '#ff5470'; ctx.fill();
+  }else{
+    ctx.strokeStyle = 'rgba(255,84,112,.35)'; ctx.lineWidth = 1.1; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawHUD(){
+  /* 배경 바 */
+  const g = ctx.createLinearGradient(0,0,0,HUD_H);
+  g.addColorStop(0,'rgba(8,6,26,.98)');
+  g.addColorStop(1,'rgba(8,6,26,.90)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,HUD_H);
+  ctx.strokeStyle = 'rgba(154,107,255,.45)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,HUD_H); ctx.lineTo(W,HUD_H); ctx.stroke();
+
+  ctx.textBaseline = 'middle';
+
+  /* 점수 */
+  ctx.textAlign = 'left';
+  ctx.font = '10px "Press Start 2P", monospace';
+  ctx.fillStyle = '#8f9ad0';
+  ctx.fillText('SCORE', 22, 20);
+  ctx.font = '22px "Press Start 2P", monospace';
+  ctx.shadowColor = 'rgba(77,243,255,.8)'; ctx.shadowBlur = 12;
+  ctx.fillStyle = '#4df3ff';
+  ctx.fillText(String(G.score).padStart(6,'0'), 22, 43);
+  ctx.shadowBlur = 0;
+
+  /* 하트 */
+  ctx.textAlign = 'right';
+  ctx.font = '10px "Press Start 2P", monospace';
+  ctx.fillStyle = '#8f9ad0';
+  ctx.fillText('LIFE', W-22, 18);
+  for(let i = 0; i < 3; i++){
+    drawHeart(W - 34 - i*30, 42, 2.4, i < G.lives);
+  }
+
+  /* 웨이브 · 난이도 */
+  ctx.textAlign = 'center';
+  ctx.font = '10px "Press Start 2P", monospace';
+  ctx.fillStyle = '#8f9ad0';
+  ctx.fillText('WAVE', W/2, 16);
+  ctx.font = '18px "Press Start 2P", monospace';
+  ctx.shadowColor = 'rgba(255,212,94,.8)'; ctx.shadowBlur = 10;
+  ctx.fillStyle = '#ffd45e';
+  ctx.fillText(String(G.wave), W/2, 38);
+  ctx.shadowBlur = 0;
+  ctx.font = '500 11px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = '#6f78a8';
+  ctx.fillText(`${G.d.label} · 2~${G.d.max}`, W/2, 54);
+
+  /* 콤보 */
+  if(G.combo >= 2){
+    const mult = Math.min(5, 1 + Math.floor(G.combo/4));
+    ctx.textAlign = 'left';
+    ctx.font = '12px "Press Start 2P", monospace';
+    ctx.shadowColor = 'rgba(255,77,210,.9)'; ctx.shadowBlur = 12;
+    ctx.fillStyle = '#ff4dd2';
+    ctx.fillText(`COMBO ${G.combo}  x${mult}`, 190, 43);
+    ctx.shadowBlur = 0;
+  }
+}
+
+function drawBanner(){
+  if(!G.banner || G.bannerT <= 0) return;
+  const p = G.bannerT / 1900;
+  const a = p > 0.8 ? (1-p)/0.2 : Math.min(1, p/0.25);
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, a));
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '36px "Press Start 2P", monospace';
+  ctx.shadowColor = 'rgba(77,243,255,.9)'; ctx.shadowBlur = 26;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(G.banner.big, W/2, H/2 - 16);
+  ctx.shadowBlur = 10;
+  ctx.font = '700 17px "Noto Sans KR", sans-serif';
+  ctx.fillStyle = '#ffd45e';
+  ctx.fillText(G.banner.small, W/2, H/2 + 26);
+  ctx.restore();
+}
+
+function render(){
+  drawBackground();
+  ctx.save();
+  if(G && G.shake > 0){
+    ctx.translate((Math.random()-0.5)*G.shake, (Math.random()-0.5)*G.shake);
+  }
+  if(G){
+    /* HUD 아래쪽만 전장으로 사용한다 — 적은 HUD 뒤에서 미끄러져 나온다 */
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, HUD_H, W, H - HUD_H); ctx.clip();
+    for(const e of G.enemies) drawEnemy(e);
+    drawBullets();
+    drawPlayer();
+    drawParticles();
+    drawTexts();
+    ctx.restore();
+
+    drawHUD();
+    drawBanner();
+  }
+  ctx.restore();
+
+  if(G && G.flash > 0){
+    ctx.fillStyle = `rgba(${G.flashColor},${Math.min(0.42, G.flash*0.42)})`;
+    ctx.fillRect(0,0,W,H);
+  }
+}
+
+/* 타이틀/일시정지 화면 뒤에서도 별은 흐른다 */
+function idleRender(){
+  for(const s of stars){
+    s.y += s.v * 0.016 * 0.6;
+    s.tw += 0.05;
+    if(s.y > H){ s.y = -2; s.x = Math.random()*W; }
+  }
+  drawBackground();
+}
+
+/* ============================================================
+   10. 게임 오버 · 리포트
+   ============================================================ */
+function gameOver(){
+  state = 'over';
+  overAt = performance.now();
+  Snd.over();
+  if(G.score > best){
+    best = G.score;
+    try{ localStorage.setItem('primeBest', String(best)); }catch(e){}
+    refreshBest();
+  }
+  const hits = G.hitOk.length + G.hitBad.length;
+  const acc = hits ? Math.round(G.hitOk.length / hits * 100) : 0;
+
+  document.getElementById('sScore').textContent = G.score.toLocaleString();
+  document.getElementById('sWave').textContent  = G.wave;
+  document.getElementById('sAcc').textContent   = acc + '%';
+  document.getElementById('sCombo').textContent = G.maxCombo;
+
+  const accStat = document.getElementById('sAcc').parentElement;
+  accStat.className = 'stat ' + (acc >= 80 ? 'good' : acc >= 50 ? '' : 'warn');
+
+  /* 등급과 강평 */
+  let rank, comment;
+  if(acc >= 95 && G.wave >= 4){
+    rank = 'S · 소수 감별사';
+    comment = '거의 모든 판단이 정확했다. 큰 수에서도 2·3·5·7로 나누어 보는 습관이 잘 잡혀 있다고 볼 수 있다.';
+  }else if(acc >= 80){
+    rank = 'A · 우수 요격수';
+    comment = '대체로 정확하게 판단했다. 아래 오답 목록의 소인수분해를 다시 살펴보면 실수의 규칙이 보일 것이다.';
+  }else if(acc >= 60){
+    rank = 'B · 훈련 중';
+    comment = '절반을 넘게 맞혔으나 판단이 흔들리는 구간이 있다. 짝수와 5의 배수를 먼저 걸러 내는 연습이 필요하다.';
+  }else{
+    rank = 'C · 재훈련 요망';
+    comment = '먼저 2, 3, 5, 7로 나누어지는지 차례대로 확인하는 절차를 익히고 다시 도전해 보자. 그것만으로도 100 이하의 수는 대부분 가려낼 수 있다.';
+  }
+  document.getElementById('repRank').textContent = rank;
+  document.getElementById('repComment').textContent = comment;
+
+  /* 목록 */
+  const uniq = a => [...new Set(a)].sort((x,y)=>x-y);
+  const ok   = uniq(G.hitOk);
+  const miss = uniq(G.missed);
+  const badMap = new Map();
+  G.hitBad.forEach(b => badMap.set(b.n, b.f));
+  const bad = [...badMap.keys()].sort((x,y)=>x-y);
+
+  fill('listOk',   ok.map(n=>({cls:'ok',   t:String(n)})),                       '한 기도 격추하지 못했다.');
+  fill('listBad',  bad.map(n=>({cls:'bad', t:`${n} = ${badMap.get(n)}`})),       '오발이 한 번도 없었다. 훌륭한 판단이다.');
+  fill('listMiss', miss.map(n=>({cls:'miss',t:String(n)})),                      '놓친 소수가 없다.');
+
+  document.getElementById('cOk').textContent   = `(${ok.length}종)`;
+  document.getElementById('cBad').textContent  = `(${bad.length}종)`;
+  document.getElementById('cMiss').textContent = `(${miss.length}종)`;
+
+  show(elReport);
+  elReport.scrollTop = 0;
+}
+function fill(id, items, emptyMsg){
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  if(!items.length){
+    el.innerHTML = `<span class="empty">${emptyMsg}</span>`;
+    return;
+  }
+  items.forEach(it=>{
+    const s = document.createElement('span');
+    s.className = 'chip ' + it.cls;
+    s.textContent = it.t;
+    el.appendChild(s);
+  });
+}
+
+/* ============================================================
+   11. 메인 루프
+   ============================================================ */
+let last = performance.now();
+function loop(now){
+  let dt = (now - last) / 1000;
+  last = now;
+  if(dt > 0.05) dt = 0.05;          // 탭 전환 후 튐 방지
+
+  if(state === 'playing'){
+    update(dt);
+    render();
+  }else if(state === 'paused' || state === 'over'){
+    render();
+  }else{
+    idleRender();
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* 첫 화면 배경 */
+idleRender();
+
+})();
+</script>
+</body>
+</html>
