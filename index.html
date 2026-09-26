@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>미니 게임 상자</title>
+<meta name="theme-color" content="#6b4fd8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'"
@@ -14,52 +17,77 @@
   body{
     min-height:100dvh;font-family:'Baloo 2','Noto Sans KR',system-ui,sans-serif;color:#fff;
     background:radial-gradient(120% 90% at 50% 0%,#8b6cf5 0%,#6b4fd8 45%,#402a99 100%);
-    display:flex;justify-content:center;padding:calc(env(safe-area-inset-top) + 28px) 18px 40px;
+    display:flex;justify-content:center;padding:calc(env(safe-area-inset-top) + 24px) 16px 40px;
   }
-  .wrap{width:100%;max-width:520px}
-  header{text-align:center;margin-bottom:22px}
-  header h1{font-size:38px;line-height:1.1;text-shadow:0 4px 0 rgba(0,0,0,.25)}
-  .wallet{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 16px;
-    border-radius:999px;background:rgba(0,0,0,.28);border:2px solid rgba(255,255,255,.28);
-    font-size:18px;font-weight:800}
-  .wallet .sub{font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:600;color:#cdbfff;margin-left:4px}
-  header p{margin-top:8px;font-family:'Noto Sans KR',sans-serif;font-weight:500;font-size:14px;color:#ddd3ff}
+  .wrap{width:100%;max-width:540px}
 
+  header{text-align:center;margin-bottom:18px}
+  header h1{font-size:36px;line-height:1.1;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+  header p{margin-top:6px;font-family:'Noto Sans KR',sans-serif;font-weight:500;font-size:13.5px;color:#ddd3ff}
+
+  /* 집계 */
+  .totals{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0 14px;
+  }
+  .tot{
+    background:rgba(0,0,0,.24);border:2px solid rgba(255,255,255,.22);border-radius:16px;
+    padding:9px 4px;text-align:center;
+  }
+  .tot .v{font-size:20px;font-weight:800;line-height:1.1}
+  .tot .k{font-size:10.5px;color:#cdbfff;font-family:'Noto Sans KR',sans-serif;font-weight:600;margin-top:3px}
+
+  /* 태그 */
+  .tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+  .tag{
+    border:2px solid rgba(255,255,255,.26);background:rgba(255,255,255,.10);color:#e7dfff;
+    border-radius:999px;padding:6px 14px;font-family:inherit;font-size:13.5px;font-weight:800;cursor:pointer;
+  }
+  .tag.on{background:linear-gradient(#ffd964,#f5a324);color:#5a3200;border-color:transparent;
+    box-shadow:0 3px 0 rgba(0,0,0,.2)}
+
+  /* 카드 */
   .card{
-    display:flex;gap:14px;align-items:center;text-decoration:none;color:inherit;
+    position:relative;display:flex;gap:14px;align-items:center;text-decoration:none;color:inherit;
     background:linear-gradient(160deg,rgba(255,255,255,.20),rgba(255,255,255,.08));
     border:2px solid rgba(255,255,255,.30);border-radius:22px;
-    padding:16px;margin-bottom:16px;box-shadow:0 8px 0 rgba(0,0,0,.18),0 14px 24px rgba(0,0,0,.25);
-    transition:transform .12s ease, box-shadow .12s ease;
+    padding:15px;margin-bottom:14px;
+    box-shadow:0 8px 0 rgba(0,0,0,.18),0 14px 24px rgba(0,0,0,.22);
+    transition:transform .12s,box-shadow .12s;
   }
   .card:active{transform:translateY(4px);box-shadow:0 4px 0 rgba(0,0,0,.18)}
   .thumb{
-    width:88px;height:88px;flex:none;border-radius:20px;display:grid;place-items:center;
-    font-size:44px;box-shadow:inset 0 -5px 0 rgba(0,0,0,.18);position:relative;overflow:hidden;
+    width:84px;height:84px;flex:none;border-radius:20px;display:grid;place-items:center;
+    font-size:42px;box-shadow:inset 0 -5px 0 rgba(0,0,0,.18);
   }
   .thumb.merge{background:linear-gradient(160deg,#7ee0ff,#f6cf8a)}
   .thumb.screw{background:linear-gradient(160deg,#ffd45e,#f0862b)}
   .thumb.prime{background:linear-gradient(160deg,#4df3ff,#9a6bff)}
   .thumb.recycle{background:linear-gradient(160deg,#a8e39a,#f0b03f)}
-  .card .body{flex:1;min-width:0}
-  .card h2{font-size:24px;line-height:1.15}
+  .thumb.duel{background:linear-gradient(160deg,#4df3ff,#ff7d9e)}
+  .body{flex:1;min-width:0}
+  .card h2{font-size:23px;line-height:1.15}
   .card .desc{font-family:'Noto Sans KR',sans-serif;font-weight:500;font-size:12.5px;
     color:#e6dcff;line-height:1.55;margin-top:3px;word-break:keep-all}
-  .stat{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:3px 11px;
-    border-radius:999px;background:rgba(0,0,0,.28);font-size:13px;font-weight:800}
-  .go{margin-left:auto;font-size:26px;opacity:.75;flex:none}
-
-  .more{margin-top:26px;border-top:1px dashed rgba(255,255,255,.25);padding-top:16px}
-  .more h3{font-size:15px;color:#cdbfff;margin-bottom:9px;font-family:'Noto Sans KR',sans-serif}
-  .link{
-    display:flex;align-items:center;gap:10px;text-decoration:none;color:#efe9ff;
-    background:rgba(255,255,255,.10);border:1.5px solid rgba(255,255,255,.18);
-    border-radius:14px;padding:11px 14px;font-size:14px;font-family:'Noto Sans KR',sans-serif;font-weight:600;
+  .stats{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .stat{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;
+    background:rgba(0,0,0,.28);font-size:12.5px;font-weight:800}
+  .go{margin-left:auto;font-size:26px;opacity:.7;flex:none}
+  .fresh{
+    position:absolute;top:-8px;left:14px;background:linear-gradient(#8fe3a0,#33ad5c);
+    color:#04361a;font-size:11px;font-weight:800;padding:2px 10px;border-radius:999px;
+    box-shadow:0 2px 0 rgba(0,0,0,.25);font-family:'Noto Sans KR',sans-serif;
   }
-  .link:active{background:rgba(255,255,255,.18)}
-  footer{margin-top:26px;text-align:center;font-size:12px;color:#b9a9f0;
-    font-family:'Noto Sans KR',sans-serif;line-height:1.7}
-  .reset{margin-top:10px;background:none;border:none;color:#a294dd;font:inherit;font-size:12px;
+  .empty{text-align:center;color:#c9bcf5;font-family:'Noto Sans KR',sans-serif;font-size:14px;padding:26px 0}
+
+  #install{
+    display:none;width:100%;margin:2px 0 16px;padding:13px;border:none;border-radius:16px;
+    font-family:inherit;font-size:17px;font-weight:800;color:#3a2000;cursor:pointer;
+    background:linear-gradient(#ffd964,#f5a324);box-shadow:0 5px 0 #c67a12;
+  }
+  #install.on{display:block}
+  footer{margin-top:22px;text-align:center;font-size:12px;color:#b9a9f0;
+    font-family:'Noto Sans KR',sans-serif;line-height:1.8}
+  .reset{margin-top:8px;background:none;border:none;color:#a294dd;font:inherit;font-size:12px;
     text-decoration:underline;cursor:pointer}
 </style>
 </head>
@@ -67,52 +95,13 @@
 <div class="wrap">
   <header>
     <h1>🎮 미니 게임 상자</h1>
-    <p>브라우저에서 바로 즐기는 캐주얼 게임 네 편</p>
-    <div class="wallet"><span>🪙</span><b id="coins">0</b><span class="sub">코인은 머지·나사 게임이 함께 씁니다</span></div>
+    <p>브라우저에서 바로 즐기는 캐주얼 게임 다섯 편</p>
   </header>
 
-  <a class="card" href="merge-game.html">
-    <div class="thumb merge">🍹</div>
-    <div class="body">
-      <h2>비치바 머지!</h2>
-      <div class="desc">음료를 튕겨 쏘고 같은 음료끼리 합치기.<br>손님 주문을 서빙하고 부스터를 모으세요.</div>
-      <span class="stat">🗺️ Stage <b id="mergeStage">-</b></span>
-      <span class="stat">⭐ <b id="mergeStars">-</b></span>
-      <span class="stat">💎 <b id="mergeBest">-</b></span>
-    </div>
-    <div class="go">›</div>
-  </a>
-
-  <a class="card" href="screw-game.html">
-    <div class="thumb screw">🔩</div>
-    <div class="body">
-      <h2>나사 풀기!</h2>
-      <div class="desc">풍선·곰인형·로켓을 나사로 분해하기.<br>같은 색 3개를 홀더에 모으면 팝!</div>
-      <span class="stat">🗺️ Stage <b id="screwStage">-</b></span>
-      <span class="stat">⭐ <b id="screwStars">-</b></span>
-    </div>
-    <div class="go">›</div>
-  </a>
-
-  <a class="card" href="prime-hunter.html">
-    <div class="thumb prime">🚀</div>
-    <div class="body">
-      <h2>프라임 헌터</h2>
-      <div class="desc">숫자가 적힌 적기 중 소수만 골라 격추.<br>끝나면 오답을 소인수분해로 보여줍니다.</div>
-      <span class="stat">💎 <b id="primeBest">-</b></span>
-    </div>
-    <div class="go">›</div>
-  </a>
-
-  <a class="card" href="recycle-runner.html">
-    <div class="thumb recycle">♻️</div>
-    <div class="body">
-      <h2>쓰담쓰담 러너</h2>
-      <div class="desc">달리며 쓰레기를 줍고, 플라스틱·종이·캔·유리<br>네 통에 알맞게 나눠 담는 러너.</div>
-      <span class="stat">💎 <b id="recycleBest">-</b></span>
-    </div>
-    <div class="go">›</div>
-  </a>
+  <div class="totals" id="totals"></div>
+  <button id="install">📲 홈 화면에 설치하기</button>
+  <div class="tags" id="tags"></div>
+  <div id="list"></div>
 
   <footer>
     스테이지 진행·별·코인은 이 브라우저에만 저장됩니다 (localStorage).
@@ -120,43 +109,110 @@
   </footer>
 </div>
 
+<script src="assets/core.js"></script>
 <script>
 (() => {
-  const read=(k,def)=>{ try{const r=localStorage.getItem(k); return r?JSON.parse(r):def;}catch(e){return def;} };
-  const stars=o=>Object.values((o&&o.stars)||{}).reduce((a,b)=>a+b,0);
-  const set=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+'use strict';
+const $ = id => document.getElementById(id);
+const stars = o => Object.values((o && o.stars) || {}).reduce((a,b)=>a+b, 0);
+const n = v => (v||0).toLocaleString();
 
-  const wallet=read('gameWallet',{coins:0});
-  set('coins',(wallet.coins||0).toLocaleString());
-
-  const ms=read('mergeSave',null);
-  if(ms){
-    set('mergeStage',ms.unlocked||1);
-    set('mergeStars',stars(ms));
-    set('mergeBest',(ms.best||0).toLocaleString());
-  }else{
-    let best=0; try{ best=Number(localStorage.getItem('mergeBest')||0); }catch(e){}
-    set('mergeStage',1); set('mergeStars',0); set('mergeBest',best.toLocaleString());
+/* 게임별 현재 상태를 한 줄로 요약한다 */
+function statsOf(g){
+  const plays = GB.plays()[g.id] || {};
+  const out = [];
+  if(g.save){
+    const s = GB.store.read(g.save, null);
+    out.push({icon:'🗺️', text:'Stage ' + ((s && s.unlocked) || 1)});
+    out.push({icon:'⭐', text:stars(s)});
+    if(s && s.best) out.push({icon:'💎', text:n(s.best)});
   }
+  if(g.bestKey){
+    const b = GB.store.num(g.bestKey);
+    if(b) out.push({icon:'💎', text:n(b)});
+  }
+  if(g.id === 'duel'){
+    const d = GB.store.read('duelStats', null);
+    if(d && d.games) out.push({icon:'⚔️', text:`${d.games}판 · ${d.p1} : ${d.p2}`});
+  }
+  if(plays.count) out.push({icon:'▶', text:plays.count + '회'});
+  if(!out.length) out.push({icon:'✨', text:'처음 해보기'});
+  return out;
+}
+function totals(){
+  const p = GB.plays();
+  let st = 0, best = 0, cnt = 0;
+  for(const g of GB.GAMES){
+    if(g.save)    st  += stars(GB.store.read(g.save, null));
+    if(g.bestKey) best += GB.store.num(g.bestKey);
+    cnt += (p[g.id] && p[g.id].count) || 0;
+  }
+  const coins = (GB.wallet.get() || {}).coins || 0;
+  return [
+    {v:'⭐ ' + st,   k:'모은 별'},
+    {v:'🪙 ' + n(coins), k:'코인'},
+    {v:'💎 ' + n(best),  k:'최고점 합계'},
+    {v:'▶ ' + cnt,  k:'플레이'}
+  ];
+}
 
-  let pb=0; try{ pb=Number(localStorage.getItem('primeBest')||0)||0; }catch(e){}
-  set('primeBest', pb.toLocaleString());
+/* 최근에 한 게임을 표시한다 */
+function recentId(){
+  const p = GB.plays();
+  let id = null, t = 0;
+  for(const k in p) if((p[k].last||0) > t){ t = p[k].last; id = k; }
+  return id;
+}
 
-  let rb=0; try{ rb=Number(localStorage.getItem('recycleBest')||0)||0; }catch(e){}
-  set('recycleBest', rb.toLocaleString());
+let filter = '전체';
+function render(){
+  $('totals').innerHTML = totals()
+    .map(t=>`<div class="tot"><div class="v">${t.v}</div><div class="k">${t.k}</div></div>`).join('');
 
-  const ss=read('screwNutsSave',null);
-  set('screwStage', ss? (ss.unlocked||1) : 1);
-  set('screwStars', ss? stars(ss) : 0);
+  const all = ['전체', ...new Set(GB.GAMES.flatMap(g=>g.tags))];
+  $('tags').innerHTML = all
+    .map(t=>`<button class="tag${t===filter?' on':''}" data-t="${t}">${t}</button>`).join('');
+  $('tags').querySelectorAll('.tag').forEach(b=>{
+    b.onclick = ()=>{ filter = b.dataset.t; render(); };
+  });
 
-  document.getElementById('resetAll').onclick=()=>{
-    if(!confirm('두 게임의 스테이지 진행·별·코인·아이템을 모두 지울까요?')) return;
-    try{
-      ['mergeBest','mergeSave','screwNutsSave','primeBest','recycleBest','gameWallet','gameItems']
-        .forEach(k=>localStorage.removeItem(k));
-    }catch(e){}
-    location.reload();
-  };
+  const rid = recentId();
+  const list = GB.GAMES.filter(g=>filter==='전체' || g.tags.includes(filter));
+  $('list').innerHTML = list.length ? list.map(g=>`
+    <a class="card" href="${g.file}">
+      ${g.id===rid ? '<span class="fresh">최근 플레이</span>' : ''}
+      <div class="thumb ${g.thumb}">${g.emoji}</div>
+      <div class="body">
+        <h2>${g.title}</h2>
+        <div class="desc">${g.desc}</div>
+        <div class="stats">${statsOf(g).map(s=>`<span class="stat">${s.icon} <b>${s.text}</b></span>`).join('')}</div>
+      </div>
+      <div class="go">›</div>
+    </a>`).join('')
+    : '<div class="empty">이 태그에 해당하는 게임이 아직 없어요.</div>';
+}
+render();
+
+/* PWA 설치 */
+let deferred = null;
+addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferred = e; $('install').classList.add('on');
+});
+$('install').onclick = async ()=>{
+  if(!deferred) return;
+  deferred.prompt();
+  await deferred.userChoice;
+  deferred = null; $('install').classList.remove('on');
+};
+GB.registerPWA();
+
+$('resetAll').onclick = ()=>{
+  if(!confirm('모든 게임의 스테이지 진행·별·코인·아이템·전적을 지울까요?')) return;
+  ['mergeBest','mergeSave','screwNutsSave','primeBest','recycleBest',
+   'gameWallet','gameItems','gamePlays','duelStats','duelCats','duelTarget']
+    .forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+  render();
+};
 })();
 </script>
 </body>

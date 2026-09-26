@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>PRIME HUNTER · 소수 요격 작전</title>
+<meta name="theme-color" content="#6b4fd8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'"
@@ -209,11 +212,18 @@
     font-family:"Press Start 2P",monospace;
   }
   .tgroup{display:flex;gap:10px;pointer-events:none}
+  #homeLink{
+    position:absolute;top:12%;left:10px;z-index:12;
+    width:34px;height:34px;border-radius:50%;border:2px solid rgba(77,243,255,.5);
+    background:rgba(10,14,40,.6);color:#4df3ff;font-size:14px;display:grid;place-items:center;
+    text-decoration:none;
+  }
 </style>
 </head>
 <body>
 <div id="rotate">기기를 가로로 돌리면 화면을 더 크게 사용할 수 있다.</div>
 <div id="stage">
+  <a id="homeLink" href="index.html" aria-label="게임 상자로">🏠</a>
   <canvas id="cv"></canvas>
   <div id="crt"></div>
 
@@ -246,6 +256,7 @@
       <button class="diff on" data-d="easy">쉬움<span>2 - 50</span></button>
       <button class="diff" data-d="normal">보통<span>2 - 100</span></button>
       <button class="diff" data-d="hard">어려움<span>2 - 200</span></button>
+      <button class="diff" data-d="expert">지옥<span>2 - 300</span></button>
     </div>
     <div class="btn-row">
       <button class="btn" id="startBtn">▶ 작전 시작</button>
@@ -294,6 +305,7 @@
   </div>
 </div>
 
+<script src="assets/core.js"></script>
 <script>
 (function(){
 "use strict";
@@ -352,7 +364,8 @@ function smallestFactor(n){
 const DIFF = {
   easy  : { label:'쉬움',   max:50,  speed:0.82, spawn:1.20, primeRate:0.45 },
   normal: { label:'보통',   max:100, speed:1.00, spawn:1.00, primeRate:0.42 },
-  hard  : { label:'어려움', max:200, speed:1.22, spawn:0.82, primeRate:0.40 }
+  hard  : { label:'어려움', max:200, speed:1.22, spawn:0.82, primeRate:0.40 },
+  expert: { label:'지옥',   max:300, speed:1.42, spawn:0.70, primeRate:0.38 }
 };
 let diffKey = 'easy';
 
@@ -529,6 +542,7 @@ document.getElementById('quitBtn').addEventListener('click', goTitle);
 document.getElementById('homeBtn').addEventListener('click', goTitle);
 
 function startGame(){
+  GB.log('prime');
   G = newGame();
   state = 'playing';
   show(null);
@@ -1090,6 +1104,7 @@ function gameOver(){
   if(G.score > best){
     best = G.score;
     try{ localStorage.setItem('primeBest', String(best)); }catch(e){}
+    GB.best('prime', best);
     refreshBest();
   }
   const hits = G.hitOk.length + G.hitBad.length;
@@ -1178,6 +1193,7 @@ requestAnimationFrame(loop);
 
 /* 첫 화면 배경 */
 idleRender();
+GB.registerPWA();
 
 })();
 </script>

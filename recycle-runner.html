@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>쓰담쓰담 러너</title>
+<meta name="theme-color" content="#6b4fd8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'"
@@ -56,8 +59,13 @@ body{
   box-shadow:0 14px 0 #F3E3C8, 0 22px 40px rgba(122,94,60,.18);
 }
 .bar{
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:2px 8px 10px;
+}
+.homeLink{
+  width:38px;height:38px;border-radius:12px;border:2px solid #F0DDBE;
+  background:var(--cream);display:grid;place-items:center;text-decoration:none;
+  color:var(--ink);font-size:16px;
 }
 .logo{
   display:flex;align-items:center;gap:8px;
@@ -226,7 +234,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
 <div class="app">
   <div class="machine">
     <div class="bar">
-      <div class="logo"><span class="dot"></span>쓰담쓰담 러너</div>
+      <div class="logo"><a class="homeLink" href="index.html" aria-label="게임 상자로">🏠</a><span class="dot"></span>쓰담쓰담 러너</div>
       <button class="iconbtn" id="btnSound" aria-label="소리 켜고 끄기">
         <svg viewBox="0 0 24 24" width="20" height="20" id="soundIcon" fill="currentColor"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="wave" d="M16.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
@@ -284,6 +292,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
   <div class="foot"><span class="key">Space</span> 점프 &nbsp;·&nbsp; 노란 반짝임을 모아요</div>
 </div>
 
+<script src="assets/core.js"></script>
 <script>
 "use strict";
 
@@ -568,7 +577,7 @@ let player=new Player();
 let obstacles=[],items=[],clouds=[],tufts=[];
 let state=STATE.READY, score=0, lives=CFG.LIVES, elapsed=0;
 let nextObs=1.2,nextItem=1.4, collected=[], stats={ok:0,no:0};
-let midDone=false, sortReturn=STATE.RESULT, scroll=0, last=0, uid=0, shake=0;
+let nextSort=CFG.MID_SCORE, sortReturn=STATE.RESULT, scroll=0, last=0, uid=0, shake=0;
 /* 최고 기록 — 이 브라우저에 저장된다 */
 let best=0;
 try{ best=Number(localStorage.getItem('recycleBest')||0)||0; }catch(e){}
@@ -581,7 +590,7 @@ const pebbles=[]; for(let i=0;i<16;i++) pebbles.push({x:Math.random()*1200,y:Mat
 function resetGame(){
   player.reset(); obstacles=[]; items=[]; collected=[]; parts=[];
   stats={ok:0,no:0}; score=0; lives=CFG.LIVES; elapsed=0;
-  nextObs=1.2; nextItem=1.4; midDone=false; scroll=0; shake=0;
+  nextObs=1.2; nextItem=1.4; nextSort=CFG.MID_SCORE; scroll=0; shake=0;
   renderHud();
 }
 
@@ -623,8 +632,8 @@ function update(dt){
   updateParts(dt);
   if(shake>0) shake-=dt;
 
-  if(!midDone && score>=CFG.MID_SCORE && collected.length>0){
-    midDone=true; openSort(STATE.PLAY);
+  if(score>=nextSort && collected.length>0){      // 25점마다 수거차가 다시 온다
+    nextSort=score+CFG.MID_SCORE; openSort(STATE.PLAY);
   }
 }
 
@@ -771,6 +780,7 @@ const ovStart=document.getElementById('ovStart'),
 const show=(el,on)=>el.classList.toggle('on',on);
 
 function startGame(){
+  GB.log('recycle');
   resetGame(); state=STATE.PLAY; player.ko=false;
   show(ovStart,false); show(ovSort,false); show(ovResult,false);
   last=0;
@@ -915,6 +925,7 @@ function showResult(){
   if(total>best){
     best=total;
     try{ localStorage.setItem('recycleBest',String(best)); }catch(e){}
+    GB.best('recycle', best);
   }
   bestEl.textContent='최고 기록 '+best+'점';
   show(ovResult,true);
@@ -936,6 +947,7 @@ stage.addEventListener('pointerdown',e=>{ if(state===STATE.PLAY) player.jump(); 
 /* ===== 시작 ===== */
 resize(); player.reset(); renderHud(); draw();
 requestAnimationFrame(loop);
+GB.registerPWA();
 </script>
 
 </body>

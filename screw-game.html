@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>나사 풀기! · Screw Nuts</title>
+<meta name="theme-color" content="#6b4fd8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'"
@@ -35,7 +38,7 @@
   .ico.st{background:linear-gradient(#8fe3a0,#33ad5c)}
   .ico.coin{background:linear-gradient(#ffe17a,#f0a72b)}
   .spacer{flex:1}
-  .iconbtn{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.55);
+  .iconbtn{display:grid;place-items:center;text-decoration:none;width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.55);
     background:rgba(255,255,255,.16);color:#fff;font-size:16px;cursor:pointer;flex:none}
   #boosters{position:absolute;left:0;right:0;bottom:0;z-index:6;height:11%;min-height:70px;
     display:flex;gap:8px;align-items:center;justify-content:center;
@@ -127,6 +130,7 @@
     <div class="pill"><span class="ico st">⭐</span><span id="starTxt">0</span></div>
     <div class="pill"><span class="ico coin">🪙</span><span id="coinTxt">0</span></div>
     <div class="spacer"></div>
+    <a class="iconbtn" id="homeLink" href="index.html" aria-label="게임 상자로">🏠</a>
     <button class="iconbtn" id="mapBtn">🗺️</button>
     <button class="iconbtn" id="soundBtn">🔊</button>
     <button class="iconbtn" id="resetBtn">↺</button>
@@ -198,6 +202,7 @@
   </div>
 </div>
 
+<script src="assets/core.js"></script>
 <script src="assets/sprites.js"></script>
 <script>
 (() => {
@@ -302,46 +307,47 @@ const TEMPLATES = [
     {t:'circle',x:.70,y:.74,w:.24,z:2,style:'wheel',c:'grey',nh:1},
     {t:'circle',x:.50,y:.36,w:.18,z:2,style:'window',c:'cyan',nh:1},
     {t:'bar',   x:.50,y:.90,w:.60,h:.10,a:0,z:0,style:'plank',c:'wood2',nh:2}
-  ], hid:[[.50,.36,0],[.30,.67,1],[.70,.67,1],[.50,.46,0]]})}
+  ], hid:[[.50,.36,0],[.30,.67,1],[.70,.67,1],[.50,.46,0]]})},
+
+  {name:'고양이', emoji:'🐱', build:()=>({parts:[
+    {t:'tri',   x:.33,y:.19,w:.18,h:.16,a:0,z:0,style:'fur',c:'brown',nh:1},
+    {t:'tri',   x:.67,y:.19,w:.18,h:.16,a:0,z:0,style:'fur',c:'brown',nh:1},
+    {t:'circle',x:.50,y:.33,w:.42,h:.36,z:1,style:'fur',c:'tan',nh:3},
+    {t:'circle',x:.50,y:.40,w:.22,h:.15,z:2,style:'face',c:'cream',nh:1},
+    {t:'circle',x:.50,y:.68,w:.42,h:.42,z:1,style:'fur',c:'tan',nh:4},
+    {t:'bar',   x:.80,y:.72,w:.32,h:.11,a:-0.7,z:0,style:'fur',c:'brown',nh:2},
+    {t:'circle',x:.36,y:.88,w:.18,h:.14,z:2,style:'fur',c:'cream',nh:1},
+    {t:'circle',x:.64,y:.88,w:.18,h:.14,z:2,style:'fur',c:'cream',nh:1}
+  ], hid:[[.50,.38,1],[.36,.26,0],[.64,.26,0],[.36,.84,1],[.64,.84,1],[.70,.72,1]]})},
+
+  {name:'나비', emoji:'🦋', build:()=>({parts:[
+    {t:'circle',x:.29,y:.33,w:.36,h:.32,z:0,style:'petal',c:'purple',nh:2},
+    {t:'circle',x:.71,y:.33,w:.36,h:.32,z:1,style:'petal',c:'pink',  nh:2},
+    {t:'circle',x:.33,y:.68,w:.30,h:.28,z:2,style:'petal',c:'cyan',  nh:2},
+    {t:'circle',x:.67,y:.68,w:.30,h:.28,z:3,style:'petal',c:'blue',  nh:2},
+    {t:'bar',   x:.50,y:.50,w:.54,h:.13,a:Math.PI/2,z:4,style:'fur',c:'brown',nh:3}
+  ], hid:[[.40,.40,0],[.60,.40,1],[.42,.62,2],[.58,.62,3],[.50,.33,1],[.50,.66,3]]})},
+
+  {name:'집', emoji:'🏠', build:()=>({parts:[
+    {t:'bar',   x:.74,y:.22,w:.22,h:.11,a:Math.PI/2,z:0,style:'plank',c:'wood2',nh:1},
+    {t:'tri',   x:.50,y:.28,w:.74,h:.30,a:0,z:2,style:'plain',c:'red',nh:3},
+    {t:'bar',   x:.50,y:.64,w:.60,h:.46,a:0,z:1,style:'plank',c:'cream',nh:4},
+    {t:'bar',   x:.50,y:.78,w:.18,h:.26,a:0,z:2,style:'plank',c:'wood',nh:2},
+    {t:'circle',x:.30,y:.56,w:.18,z:2,style:'window',c:'cyan',nh:1},
+    {t:'circle',x:.70,y:.56,w:.18,z:2,style:'window',c:'cyan',nh:1}
+  ], hid:[[.50,.76,1],[.30,.56,1],[.70,.56,1],[.74,.28,0],[.50,.44,1]]})}
 ];
 
-/* ── 스프라이트 로더 (없으면 벡터로 폴백) ── */
-const SPR=(()=>{
-  let api;
-  const cfg=window.GAME_SPRITES||{}, base=cfg.base||'assets/', cache={};
-  function img(path){
-    if(!path) return null;
-    if(path in cache) return cache[path];
-    const im=new Image();
-    im.onload=()=>{ im._ok=true; api._fire(); }; im.onerror=()=>{cache[path]=null;};
-    im.src=base+path; cache[path]=im; return im;
-  }
-  const ready=[];
-  const out={
-    onReady(cb){ ready.push(cb); },
-    _fire(){ for(const cb of ready) cb(); },
-    get(group,key){
-      const g=(window.GAME_SPRITES||{})[group];
-      const im=img(g&&g[key]);
-      return im&&im._ok?im:null;
-    },
-    draw(im,x,y,h){ const w=h*(im.naturalWidth/im.naturalHeight); ctx.drawImage(im,x-w/2,y-h/2,w,h); },
-    fit(im,w,h){ ctx.drawImage(im,-w/2,-h/2,w,h); }
-  };
-  api=out; return out;
-})();
+const SPR = GB.makeSprites(()=>ctx);      // 공용 코어의 스프라이트 로더
 
 /* ── 진행 저장 ───────────────────────────────── */
 const SAVE_KEY='screwNutsSave';
-const TOTAL_STAGES=40;
-const store={
-  read(k,def){ try{const r=localStorage.getItem(k); return r?JSON.parse(r):def;}catch(e){return def;} },
-  write(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
-};
-let save=Object.assign({unlocked:1,stars:{},best:0}, store.read(SAVE_KEY,{}));
-let wallet=store.read('gameWallet',{coins:120});
-let items =store.read('gameItems',{bomb:1,upgrade:1,refill:1,holder:1,undo:1,recolor:1});
-function persist(){ store.write(SAVE_KEY,save); store.write('gameWallet',wallet); store.write('gameItems',items); }
+const TOTAL_STAGES=60;
+const store = GB.store;
+let save   = Object.assign({unlocked:1, stars:{}, best:0}, store.read(SAVE_KEY, {}));
+let wallet = GB.wallet.get();
+let items  = GB.items.get();
+function persist(){ store.write(SAVE_KEY, save); GB.wallet.set(wallet); GB.items.set(items); }
 const totalStars=()=>Object.values(save.stars).reduce((a,b)=>a+b,0);
 
 /* ── 캔버스 ──────────────────────────────────── */
@@ -387,21 +393,12 @@ const TRAY_MAX=4, HOLDER_SLOTS=3;
 let holderN=3;                      // ➕부스터로 4개까지 늘어남
 let history=[];                     // 되돌리기용
 
-/* ── 사운드 ──────────────────────────────────── */
-let actx=null, soundOn=true;
-function beep(f,d,type,vol,slide){
-  if(!soundOn) return;
-  try{
-    actx=actx||new (AudioContext||webkitAudioContext)();
-    const o=actx.createOscillator(), g=actx.createGain();
-    o.type=type||'sine'; o.frequency.setValueAtTime(f,actx.currentTime);
-    if(slide) o.frequency.exponentialRampToValueAtTime(slide,actx.currentTime+d);
-    g.gain.setValueAtTime(vol||.12,actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);
-    o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+d);
-  }catch(e){}
-}
-document.getElementById('soundBtn').onclick=e=>{soundOn=!soundOn;e.currentTarget.textContent=soundOn?'🔊':'🔇';};
+/* ── 사운드 (공용 코어) ── */
+const snd = GB.makeSound();
+const beep = (f,d,t,v,sl) => snd.beep(f,d,t,v,sl);
+document.getElementById('soundBtn').onclick = e => {
+  e.currentTarget.textContent = snd.toggle() ? '🔊' : '🔇';
+};
 
 /* ── 조각 기하 ───────────────────────────────── */
 function toLocal(p,x,y){
@@ -1267,6 +1264,7 @@ function openMap(){
   buildMap(); show('mapOvl');
 }
 function startStage(n){
+  GB.log('screw');
   hide('mapOvl'); hide('clearOvl'); hide('overOvl');
   score=0;
   buildStage(n);
@@ -1289,6 +1287,7 @@ if(location.search.includes('debug')) window.__dbg={
   isHidden, startStage
 };
 SPR.onReady(()=>buildScrewCache());
+GB.registerPWA();
 layout(); buildStage(save.unlocked); state='menu'; buildMap();
 requestAnimationFrame(frame);
 })();

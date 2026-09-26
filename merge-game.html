@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>비치바 머지! · Merge Drinks</title>
+<meta name="theme-color" content="#6b4fd8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'"
@@ -32,7 +35,7 @@
   .ico.coin{background:linear-gradient(#ffe17a,#f0a72b)}
   .ico.heart{background:linear-gradient(#ff8f8f,#e33)}
   .spacer{flex:1}
-  .iconbtn{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.5);
+  .iconbtn{display:grid;place-items:center;text-decoration:none;width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.5);
     background:rgba(255,255,255,.16);color:#fff;font-size:15px;cursor:pointer;flex:none}
 
   /* 부스터 바 */
@@ -125,6 +128,7 @@
     <div class="pill"><span class="ico heart">❤️</span><span id="lifeTxt">3</span></div>
     <div class="pill"><span class="ico coin">🪙</span><span id="coinTxt">0</span></div>
     <div class="spacer"></div>
+    <a class="iconbtn" id="homeLink" href="index.html" aria-label="게임 상자로">🏠</a>
     <button class="iconbtn" id="mapBtn">🗺️</button>
     <button class="iconbtn" id="soundBtn">🔊</button>
   </div>
@@ -189,6 +193,7 @@
   </div>
 </div>
 
+<script src="assets/core.js"></script>
 <script src="assets/sprites.js"></script>
 <script>
 (() => {
@@ -198,46 +203,18 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const rand=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[(Math.random()*a.length)|0];
 
-/* ── 스프라이트 로더 (없으면 벡터로 폴백) ── */
-const SPR=(()=>{
-  let api;
-  const cfg=window.GAME_SPRITES||{}, base=cfg.base||'assets/', cache={};
-  function img(path){
-    if(!path) return null;
-    if(path in cache) return cache[path];
-    const im=new Image();
-    im.onload=()=>{ im._ok=true; api._fire(); };
-    im.onerror=()=>{cache[path]=null;};
-    im.src=base+path; cache[path]=im; return im;
-  }
-  const ready=[];
-  const out={
-    onReady(cb){ ready.push(cb); },
-    get(group,key){
-      const g=(window.GAME_SPRITES||{})[group];
-      const im=img(g&&g[key]);
-      return im&&im._ok?im:null;
-    },
-    _fire(){ for(const cb of ready) cb(); },
-    draw(im,x,y,h){
-      const w=h*(im.naturalWidth/im.naturalHeight);
-      ctx.drawImage(im,x-w/2,y-h/2,w,h);
-    }
-  };
-  api=out; return out;
-})();
+const SPR = GB.makeSprites(()=>ctx);      // 공용 코어의 스프라이트 로더
 
-/* ── 저장 (지갑·아이템은 두 게임 공용) ── */
-const store={
-  read(k,def){ try{const r=localStorage.getItem(k); return r?JSON.parse(r):def;}catch(e){return def;} },
-  write(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+/* ── 저장 (지갑·아이템은 게임들 공용) ── */
+const store = GB.store;
+let wallet = GB.wallet.get();
+let items  = GB.items.get();
+let save   = store.read('mergeSave', {unlocked:1, stars:{}, best:0, seenHelp:false});
+const saveAll = () => {
+  GB.wallet.set(wallet); GB.items.set(items); store.write('mergeSave', save);
+  try{ localStorage.setItem('mergeBest', String(save.best||0)); }catch(e){}
 };
-let wallet=store.read('gameWallet',{coins:120});
-let items =store.read('gameItems',{bomb:1,upgrade:1,refill:1,holder:0,undo:0,recolor:0});
-let save  =store.read('mergeSave',{unlocked:1,stars:{},best:0,seenHelp:false});
-const saveAll=()=>{store.write('gameWallet',wallet);store.write('gameItems',items);store.write('mergeSave',save);
-  try{localStorage.setItem('mergeBest',String(save.best||0));}catch(e){}};
-const totalStars=()=>Object.values(save.stars).reduce((a,b)=>a+b,0);
+const totalStars = () => Object.values(save.stars).reduce((a,b)=>a+b, 0);
 
 /* ── 음료 ── */
 const DRINKS=[
@@ -282,24 +259,15 @@ let bodies=[],particles=[],proj=null,nextLv=0,customers=[];
 let stageNo=1,score=0,lives=3,combo=0,served=0,goal=5,cfg=null;
 let state='menu',aim=null,bombArmed=false,spawnTimer=0,shotsLeft=6,shake=0,flashes=[];
 
-/* ── 사운드 ── */
-let actx=null,soundOn=true;
-function beep(f,d,type,vol,slide){
-  if(!soundOn) return;
-  try{
-    actx=actx||new (AudioContext||webkitAudioContext)();
-    const o=actx.createOscillator(),g=actx.createGain();
-    o.type=type||'sine'; o.frequency.setValueAtTime(f,actx.currentTime);
-    if(slide) o.frequency.exponentialRampToValueAtTime(slide,actx.currentTime+d);
-    g.gain.setValueAtTime(vol||.12,actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);
-    o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+d);
-  }catch(e){}
-}
-document.getElementById('soundBtn').onclick=e=>{soundOn=!soundOn;e.currentTarget.textContent=soundOn?'🔊':'🔇';};
+/* ── 사운드 (공용 코어) ── */
+const snd = GB.makeSound();
+const beep = (f,d,t,v,sl) => snd.beep(f,d,t,v,sl);
+document.getElementById('soundBtn').onclick = e => {
+  e.currentTarget.textContent = snd.toggle() ? '🔊' : '🔇';
+};
 
 /* ── 스테이지 ── */
-const TOTAL_STAGES=30;
+const TOTAL_STAGES=40;
 function stageConfig(n){
   return {
     goal:      clamp(4+Math.floor(n*0.6),4,12),
@@ -340,8 +308,9 @@ function buildStage(n){
 }
 function spawnCustomer(slot,delay){
   const lv=Math.floor(rand(cfg.minOrder,cfg.maxOrder+1));
-  customers[slot]={level:lv,pat:cfg.patience,max:cfg.patience,
-    face:(Math.random()*6)|0,mood:'wait',anim:0,delay:delay||0,bob:rand(0,TAU)};
+  const vip=stageNo>=8 && Math.random()<0.18;      // VIP는 보상 2배, 대신 인내심이 짧다
+  customers[slot]={level:lv, pat:cfg.patience*(vip?0.75:1), max:cfg.patience*(vip?0.75:1),
+    face:(Math.random()*6)|0, mood:'wait', anim:0, delay:delay||0, bob:rand(0,TAU), vip};
 }
 function syncHud(){
   document.getElementById('lvTxt').textContent=stageNo;
@@ -437,12 +406,12 @@ function serve(lv,x,y){
   if(best<0) return;
   const c=customers[best];
   const fresh=c.pat/c.max;
-  const coins=Math.round((22+lv*14)*(fresh>0.6?1.3:1));
+  const coins=Math.round((22+lv*14)*(fresh>0.6?1.3:1)*(c.vip?2:1));
   wallet.coins+=coins; score+=60*lv; served++;
   c.mood='happy'; c.anim=1;
   burst(field.x+field.w*(best+0.5)/3, custY, '#ffd45e', 22);
   beep(880,.22,'square',.12);
-  toast('+'+coins+'🪙 서빙!');
+  toast((c.vip?'👑 VIP +':'+')+coins+'🪙 서빙!');
   saveAll();
   setTimeout(()=>{ if(state==='play') spawnCustomer(best,0.5); },900);
   if(served>=goal) setTimeout(()=>checkClear(),700);
@@ -860,11 +829,20 @@ function drawCustomer(i){
     const p=clamp(c.pat/c.max,0,1);
     ctx.save();
     ctx.lineWidth=custR*0.17; ctx.lineCap='round';
-    ctx.strokeStyle='rgba(0,0,0,.25)';
+    ctx.strokeStyle=c.vip?'rgba(120,80,0,.35)':'rgba(0,0,0,.25)';
     ctx.beginPath(); ctx.arc(cx,custY+bob,custR*1.22,0,TAU); ctx.stroke();
-    ctx.strokeStyle=p>0.5?'#6ee87a':p>0.25?'#ffd45e':'#ff6b6b';
+    ctx.strokeStyle=p>0.5?(c.vip?'#ffd45e':'#6ee87a'):p>0.25?'#ffb03a':'#ff6b6b';
     ctx.beginPath(); ctx.arc(cx,custY+bob,custR*1.22,-Math.PI/2,-Math.PI/2+TAU*p); ctx.stroke();
     ctx.restore();
+    if(c.vip){                                   // 왕관
+      ctx.save(); ctx.translate(cx,custY+bob-custR*1.35); ctx.fillStyle='#ffd45e';
+      ctx.beginPath();
+      ctx.moveTo(-custR*0.5,custR*0.16); ctx.lineTo(-custR*0.5,-custR*0.18);
+      ctx.lineTo(-custR*0.22,custR*0.02); ctx.lineTo(0,-custR*0.26);
+      ctx.lineTo(custR*0.22,custR*0.02); ctx.lineTo(custR*0.5,-custR*0.18);
+      ctx.lineTo(custR*0.5,custR*0.16); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
   }
 }
 function drawBackground(){
@@ -1053,6 +1031,7 @@ function openMap(){
   buildMap(); show('mapOvl');
 }
 function startStage(n){
+  GB.log('merge');
   hide('mapOvl'); hide('clearOvl'); hide('overOvl');
   buildStage(n);
   if(!save.seenHelp){ save.seenHelp=true; saveAll(); show('helpOvl'); }
@@ -1072,6 +1051,7 @@ if(location.search.includes('debug')) window.__dbg={
   get save(){return save}, get launchY(){return launchY}, startStage, serve
 };
 SPR.onReady(()=>buildDrinkCache());
+GB.registerPWA();
 layout(); buildStage(save.unlocked); state='menu'; buildMap();
 requestAnimationFrame(frame);
 })();
